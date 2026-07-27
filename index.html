@@ -373,7 +373,8 @@ function map(){
   }
   /* ピンを離しても文字幅までは吸収できないので、
      ラベルは上下4段の候補から先に置いた箱と当たらない位置を選ぶ */
-  const boxes = [];
+  /* ピン自体も障害物。これが無いとラベルが数字の下に潜る */
+  const boxes = pts.map(p => ({x1:p.x-17, x2:p.x+17, y1:p.y-17, y2:p.y+17}));
   const slot = p => {
     const w = Math.min(p.name.length,8)*8.4;
     for(const dy of [29,-21,41,-33,53]){
