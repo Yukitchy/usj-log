@@ -261,13 +261,13 @@ const ja = n => JA[n] || n;
 
 /* エリア（座標から手置き）。地図の"場所感"を出すためだけの背景 */
 const ZONES = [
-  {n:'SUPER NINTENDO WORLD', la:34.66805, lo:135.43015, r:118},
-  {n:'WIZARDING WORLD',      la:34.66862, lo:135.43180, r:82},
-  {n:'UNIVERSAL WONDERLAND', la:34.66755, lo:135.43340, r:118},
-  {n:'HOLLYWOOD',            la:34.66640, lo:135.43450, r:105},
-  {n:'AMITY VILLAGE',        la:34.66590, lo:135.43160, r:78},
-  {n:'JURASSIC PARK',        la:34.66445, lo:135.43062, r:88},
-  {n:'MINION PARK',          la:34.66345, lo:135.43245, r:82}
+  {n:'SUPER NINTENDO WORLD', la:34.66800, lo:135.43005, r:96},
+  {n:'WIZARDING WORLD',      la:34.66866, lo:135.43185, r:62},
+  {n:'UNIVERSAL WONDERLAND', la:34.66750, lo:135.43345, r:98},
+  {n:'HOLLYWOOD',            la:34.66640, lo:135.43455, r:88},
+  {n:'AMITY VILLAGE',        la:34.66600, lo:135.43165, r:62},
+  {n:'JURASSIC PARK',        la:34.66445, lo:135.43062, r:74},
+  {n:'MINION PARK',          la:34.66345, lo:135.43245, r:68}
 ];
 
 const S = { data:[], showClosed:false, sort:'wait', log:[] };
@@ -335,24 +335,50 @@ function crowd(){
   document.getElementById('cst').textContent = lv[1] + '　/　稼働 ' + ws.length + '施設の平均';
 }
 
+/* 隣接ライドは実測で20m程度しか離れておらず、そのまま打つとピンが重なって
+   数字が読めない。実座標は距離計算に残したまま、描画位置だけ反発で離す */
+function declutter(p, gap){
+  for(let k=0;k<80;k++){
+    let moved = false;
+    for(let i=0;i<p.length;i++) for(let j=i+1;j<p.length;j++){
+      let dx = p[j].x-p[i].x, dy = p[j].y-p[i].y;
+      const d = Math.hypot(dx,dy) || 0.01;
+      if(d < gap){
+        const f = (gap-d)/2/d;
+        dx*=f; dy*=f;
+        p[i].x-=dx; p[i].y-=dy; p[j].x+=dx; p[j].y+=dy;
+        moved = true;
+      }
+    }
+    if(!moved) break;
+  }
+}
+
 function map(){
-  const done = S.log.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
   let s = '';
   ZONES.forEach(z=>{
-    s += '<circle cx="'+px(z.lo).toFixed(1)+'" cy="'+py(z.la).toFixed(1)+'" r="'+z.r+'" fill="#16202D" opacity=".85"/>';
+    s += '<circle cx="'+px(z.lo).toFixed(1)+'" cy="'+py(z.la).toFixed(1)+'" r="'+z.r+'" fill="#16202D" opacity=".9"/>';
   });
   ZONES.forEach(z=>{
-    s += '<text class="zone-l" x="'+px(z.lo).toFixed(1)+'" y="'+(py(z.la)-z.r+15).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
+    s += '<text class="zone-l" x="'+px(z.lo).toFixed(1)+'" y="'+(py(z.la)-z.r-6).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
+
+  const pts = S.data.filter(x=>x.open && x.wait!=null)
+                    .map(x => ({...x, x:px(x.lo), y:py(x.la)}));
+  declutter(pts, 39);
+
+  const done = S.log.map(id => pts.find(p=>p.id===id)).filter(Boolean);
   if(done.length>1){
-    s += '<polyline class="route" points="'+done.map(d=>px(d.lo).toFixed(1)+','+py(d.la).toFixed(1)).join(' ')+'"/>';
+    s += '<polyline class="route" points="'+done.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
   }
-  S.data.filter(x=>x.open && x.wait!=null).forEach(x=>{
-    const X=px(x.lo), Y=py(x.la), on=S.log.includes(x.id);
-    s += '<g class="pin'+(on?' done':'')+'" data-id="'+x.id+'">'
-       +   '<circle class="dot" cx="'+X.toFixed(1)+'" cy="'+Y.toFixed(1)+'" r="16" fill="'+color(x.wait)+'"/>'
-       +   '<text x="'+X.toFixed(1)+'" y="'+Y.toFixed(1)+'">'+x.wait+'</text>'
-       +   '<text class="nm" x="'+X.toFixed(1)+'" y="'+(Y+30).toFixed(1)+'" text-anchor="middle">'+esc(x.name.slice(0,9))+'</text>'
+  /* 名前は上下交互。ピンを離しても文字幅までは吸収できないため */
+  pts.forEach((p,i)=>{
+    const on = S.log.includes(p.id), ly = p.y + (i%2 ? 29 : -21);
+    s += '<g class="pin'+(on?' done':'')+'" data-id="'+p.id+'">'
+       +   '<title>'+esc(p.name)+' / '+p.wait+'分待ち</title>'
+       +   '<circle class="dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="15" fill="'+color(p.wait)+'"/>'
+       +   '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'">'+p.wait+'</text>'
+       +   '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(p.name.slice(0,8))+'</text>'
        + '</g>';
   });
   const m = document.getElementById('map');
