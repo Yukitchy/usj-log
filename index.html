@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>パークログ USJ — 待ち時間 × その日の記録</title>
+<meta name="theme-color" content="#0E141C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E141C;          /* 地：夜の藍 */
+  --bg2:#151E29;
+  --card:#1A2533;
+  --line:#27384B;
+  --ink:#EAF1F8;
+  --sub:#8FA4BB;
+  --accent:#2E86FF;      /* 主役：地図の青 */
+  --sky:#4FB0FF;
+  /* 意味の色（アクセントとは別に持つ） */
+  --ok:#3FBF6F;
+  --warn:#F5B942;
+  --bad:#F0554E;
+  --gold:#FFC24B;
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body,p,li,td,th,div,span,b,small,summary,button,a,h1,h2,h3,h4{
+  word-break:auto-phrase;line-break:strict;overflow-wrap:anywhere;
+}
+h1,h2,h3,h4,.btn,.chip,.pill,.tag,.eyebrow,.note,.hint{text-wrap:balance}
+p{text-wrap:pretty}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c",-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.num{font-variant-numeric:tabular-nums}
+.dsp{font-family:"Lilita One",sans-serif;font-weight:400;letter-spacing:.01em}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+
+/* ── ヘッダー ── */
+header{
+  position:sticky;top:0;z-index:20;
+  background:rgba(14,20,28,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.hbar{display:flex;align-items:center;gap:12px;padding:10px 0}
+.logo{display:flex;align-items:baseline;gap:7px;flex:1;min-width:0}
+.logo b{font-size:17px;font-weight:900;letter-spacing:.02em}
+.logo span{font-size:10px;color:var(--sub);letter-spacing:.14em;font-weight:800}
+.rf{
+  border:1px solid var(--line);background:var(--bg2);color:var(--sub);
+  border-radius:999px;padding:6px 13px;font:inherit;font-size:12px;font-weight:800;
+  cursor:pointer;white-space:nowrap;
+  transition:transform .12s var(--spring),border-color .12s ease,color .12s ease;
+}
+.rf:hover{transform:translateY(-1px);border-color:var(--sky);color:var(--sky)}
+.rf:active{transform:translateY(0) scale(.97)}
+.rf[data-busy="1"]{opacity:.5;pointer-events:none}
+
+/* ── 混雑スコア ── */
+.crowd{
+  display:flex;align-items:center;gap:16px;
+  background:linear-gradient(160deg,var(--bg2),var(--card));
+  border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin:14px 0 12px;
+  position:relative;overflow:hidden;
+  animation:in .6s var(--ease-out) both;
+}
+.crowd::before{
+  content:"";position:absolute;top:-90px;right:-70px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(46,134,255,.20),transparent 70%);pointer-events:none;
+}
+.crowd .big{font-size:52px;line-height:.9;letter-spacing:-.01em}
+.crowd .u{font-size:15px;color:var(--sub);margin-left:3px}
+.crowd .meta{flex:1;min-width:0}
+.crowd .lv{font-size:19px;font-weight:900;line-height:1.3}
+.crowd .sub{font-size:11.5px;color:var(--sub);line-height:1.6}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ── 地図 ── */
+.mapcard{
+  background:var(--bg2);border:1px solid var(--line);border-radius:20px;
+  padding:8px;position:relative;overflow:hidden;
+  animation:in .6s .06s var(--ease-out) both;
+}
+svg.map{display:block;width:100%;height:auto;border-radius:14px;background:#0B1119}
+.zone-l{font-size:9.5px;font-weight:800;fill:#5C7391;letter-spacing:.06em}
+.pin{cursor:pointer}
+.pin circle{transition:r .14s var(--ease-out)}
+.pin:hover circle.dot{r:19}
+.pin text{font-size:12px;font-weight:900;fill:#0B1119;text-anchor:middle;dominant-baseline:central;pointer-events:none;font-variant-numeric:tabular-nums}
+.pin.done circle.dot{stroke:#fff;stroke-width:2.5}
+.pin .nm{font-size:8.5px;fill:#93A9C2;font-weight:800;dominant-baseline:auto}
+.route{fill:none;stroke:var(--gold);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:7 6;opacity:.9}
+.legend{display:flex;gap:12px;justify-content:center;padding:9px 4px 3px;flex-wrap:wrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.legend span{font-size:10.5px;color:var(--sub);font-weight:800}
+
+/* ── タブ ── */
+.tabs{display:flex;gap:6px;margin:16px 0 10px;background:var(--bg2);padding:4px;border-radius:14px;border:1px solid var(--line)}
+.tab{
+  flex:1;border:0;background:transparent;color:var(--sub);font:inherit;font-size:13px;font-weight:800;
+  padding:9px 4px;border-radius:10px;cursor:pointer;transition:background .16s ease,color .16s ease;
+}
+.tab[aria-selected="true"]{background:var(--accent);color:#fff}
+
+/* ── リスト ── */
+.sortbar{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.chip{
+  border:1px solid var(--line);background:var(--bg2);color:var(--sub);
+  border-radius:999px;padding:5px 12px;font:inherit;font-size:11.5px;font-weight:800;
+  cursor:pointer;white-space:nowrap;transition:all .14s ease;
+}
+.chip[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 22%,var(--bg2));border-color:var(--accent);color:var(--sky)}
+.row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:11px 13px;margin-bottom:8px;
+  transition:transform .16s var(--ease-out),border-color .16s ease;
+}
+.row:hover{transform:translateY(-2px)}
+.row.done{border-color:color-mix(in srgb,var(--gold) 45%,var(--line));background:color-mix(in srgb,var(--gold) 7%,var(--card))}
+.w{
+  width:52px;flex:none;text-align:center;border-radius:11px;padding:6px 0;
+  font-weight:900;font-size:19px;color:#0B1119;line-height:1.05;
+}
+.w small{display:block;font-size:8.5px;font-weight:800;opacity:.72;letter-spacing:.04em}
+.w.closed{background:#2B3A4C;color:var(--sub)}
+.nm2{flex:1;min-width:0}
+.nm2 b{display:block;font-size:13.5px;font-weight:800;line-height:1.45}
+.nm2 span{font-size:10.5px;color:var(--sub);font-weight:700}
+.add{
+  flex:none;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
+  width:40px;height:40px;border-radius:12px;font-size:19px;cursor:pointer;
+  transition:transform .12s var(--spring),background .12s ease,color .12s ease;
+}
+.add:hover{transform:translateY(-2px);color:var(--sky);border-color:var(--sky)}
+.add:active{transform:scale(.93)}
+.add.on{background:var(--gold);color:#0B1119;border-color:var(--gold)}
+
+/* ── 戦績 ── */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}
+.st{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 15px}
+.st .k{font-size:9.5px;color:var(--sub);font-weight:800;letter-spacing:.13em}
+.st .v{font-size:30px;line-height:1.15;margin-top:2px}
+.st .v em{font-style:normal;font-size:13px;color:var(--sub);margin-left:3px;font-family:"M PLUS Rounded 1c";font-weight:800}
+.st.hero{grid-column:1/-1;background:linear-gradient(150deg,color-mix(in srgb,var(--gold) 16%,var(--card)),var(--card));border-color:color-mix(in srgb,var(--gold) 35%,var(--line))}
+.st.hero .v{font-size:40px;color:var(--gold)}
+.tl{position:relative;padding-left:22px;margin-top:6px}
+.tl::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.tl li{list-style:none;position:relative;padding:7px 0;font-size:13px}
+.tl li::before{content:"";position:absolute;left:-21px;top:14px;width:10px;height:10px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 0 3px var(--bg)}
+.tl li small{color:var(--sub);font-size:10.5px;margin-left:6px;font-weight:800}
+.empty{text-align:center;color:var(--sub);font-size:13px;padding:34px 20px;line-height:1.9}
+.danger{background:transparent;border:1px solid var(--line);color:var(--sub);border-radius:999px;
+  padding:7px 16px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:block;margin:16px auto 0}
+.danger:hover{border-color:var(--bad);color:var(--bad)}
+
+footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34px;line-height:1.9}
+.hide{display:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <div class="logo"><b>パークログ</b><span class="dsp">USJ</span></div>
+    <button class="rf" id="rf">更新</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="crowd">
+    <div><span class="big dsp num" id="cs">--</span><span class="u">分</span></div>
+    <div class="meta">
+      <div class="lv" id="clv">読み込み中</div>
+      <div class="sub" id="cst">全アトラクションの平均待ち時間</div>
+    </div>
+  </div>
+
+  <div class="mapcard">
+    <svg class="map" id="map" viewBox="0 0 560 600" role="img" aria-label="USJ 待ち時間マップ"></svg>
+    <div class="legend">
+      <span><i style="background:#3FBF6F"></i>〜20分</span>
+      <span><i style="background:#F5B942"></i>〜50分</span>
+      <span><i style="background:#F0554E"></i>50分〜</span>
+      <span><i style="background:#FFC24B"></i>今日のルート</span>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-t="list">待ち時間</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="log">今日の戦績</button>
+  </div>
+
+  <section id="p-list">
+    <div class="sortbar">
+      <button class="chip" data-s="wait" aria-pressed="true">待ち時間が長い順</button>
+      <button class="chip" data-s="short" aria-pressed="false">空いてる順</button>
+      <button class="chip" data-s="name" aria-pressed="false">名前順</button>
+      <button class="chip" id="cl" aria-pressed="false">休止中も表示</button>
+    </div>
+    <div id="rows"></div>
+  </section>
+
+  <section id="p-log" class="hide"></section>
+
+</main>
+
+<footer>
+  待ち時間データ: themeparks.wiki（非公式・数分の遅延あり）<br>
+  記録はこの端末の中だけに保存されます
+</footer>
+
+<script>
+const PARK = '47f61fac-7586-41ac-ae80-61c9257cf33e';
+const API  = 'https://api.themeparks.wiki/v1/entity/' + PARK;
+const LS   = 'usjlog.v1';
+
+/* 主要アトラクションの和名。APIは英語しか返さないので手当て。
+   ponytail: 未収録は英語のまま出す。増やしたい時はここに1行足すだけ */
+const JA = {
+  'Mine Cart Madness™':'ドンキーコングのクレイジー・トロッコ',
+  'Mario Kart: Koopa’s Challenge™':'マリオカート 〜クッパの挑戦状〜',
+  "Mario Kart: Koopa's Challenge™":'マリオカート 〜クッパの挑戦状〜',
+  "Yoshi's Adventure™":'ヨッシー・アドベンチャー',
+  'Power-Up Band™ Key Challenges':'パワーアップバンド・キーチャレンジ',
+  'Harry Potter and the Forbidden Journey™':'ハリー・ポッター・アンド・ザ・フォービドゥン・ジャーニー',
+  'Flight of the Hippogriff™':'フライト・オブ・ザ・ヒッポグリフ',
+  'Hollywood Dream - The Ride':'ハリウッド・ドリーム・ザ・ライド',
+  'Hollywood Dream - The Ride: Backdrop':'ハリウッド・ドリーム 〜バックドロップ〜',
+  'Space Fantasy - The Ride':'スペース・ファンタジー・ザ・ライド',
+  'Space Fantasy - The Ride: CLUB ZEDD REMIX':'スペース・ファンタジー（CLUB ZEDD）',
+  'The Flying Dinosaur':'ザ・フライング・ダイナソー',
+  'Jurassic Park - The Ride':'ジュラシック・パーク・ザ・ライド',
+  'Jurassic Park - The Ride: Discover U!!! Version':'ジュラシック・パーク・ザ・ライド',
+  'Jurassic World Mission Walk':'ジュラシック・ワールド・ミッションウォーク',
+  'JAWS':'ジョーズ',
+  'Despicable Me: Minion Mayhem':'ミニオン・ハチャメチャ・ライド',
+  'Freeze Ray Sliders':'フリーズ・レイ・スライダー',
+  'Illumination’s Villain-Con Minion Blast':'ヴィラン・コン ミニオン・ブラスト',
+  'Snoopy’s Flying Ace Adventure':'スヌーピーのグレートレース',
+  "Snoopy's Flying Ace Adventure":'スヌーピーのグレートレース',
+  'The Flying Snoopy':'フライング・スヌーピー',
+  "Hello Kitty's Cupcake Dream":'ハローキティのカップケーキ・ドリーム',
+  'Detective Conan: The World':'名探偵コナン・ザ・ワールド',
+  'Detective Conan 4-D Live Show: Jewel Under the Starry Sky':'名探偵コナン 4-Dライブ・ショー',
+  'JUJUTSU KAISEN: The Real 4-D — Clock Tower of Recurrence':'呪術廻戦 ザ・リアル 4-D',
+  'WaterWorld':'ウォーターワールド'
+};
+const ja = n => JA[n] || n;
+
+/* エリア（座標から手置き）。地図の"場所感"を出すためだけの背景 */
+const ZONES = [
+  {n:'SUPER NINTENDO WORLD', la:34.66805, lo:135.43015, r:118},
+  {n:'WIZARDING WORLD',      la:34.66862, lo:135.43180, r:82},
+  {n:'UNIVERSAL WONDERLAND', la:34.66755, lo:135.43340, r:118},
+  {n:'HOLLYWOOD',            la:34.66640, lo:135.43450, r:105},
+  {n:'AMITY VILLAGE',        la:34.66590, lo:135.43160, r:78},
+  {n:'JURASSIC PARK',        la:34.66445, lo:135.43062, r:88},
+  {n:'MINION PARK',          la:34.66345, lo:135.43245, r:82}
+];
+
+const S = { data:[], showClosed:false, sort:'wait', log:[] };
+try { S.log = JSON.parse(localStorage.getItem(LS)) || []; } catch(e){ S.log = []; }
+const save = () => localStorage.setItem(LS, JSON.stringify(S.log));
+
+/* 緯度経度 → 画面座標。パークは約600m四方なのでメルカトル補正は不要、
+   経度だけ cos(緯度) で潰せば実寸比になる */
+const LA0=34.66280, LA1=34.66940, LO0=135.42940, LO1=135.43680;
+const KX = Math.cos(34.666*Math.PI/180);
+const W=560, H=600, PAD=34;
+const spanX=(LO1-LO0)*KX, spanY=(LA1-LA0);
+const sc = Math.min((W-PAD*2)/spanX, (H-PAD*2)/spanY);
+const px = lo => PAD + (lo-LO0)*KX*sc + ((W-PAD*2)-spanX*sc)/2;
+const py = la => PAD + (LA1-la)*sc     + ((H-PAD*2)-spanY*sc)/2;
+const meters = (a,b) => Math.hypot((a.lo-b.lo)*KX, a.la-b.la) * 111000;
+
+const color = w => w==null ? '#2B3A4C' : w<=20 ? '#3FBF6F' : w<=50 ? '#F5B942' : '#F0554E';
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function load(){
+  const b = document.getElementById('rf');
+  b.dataset.busy = '1'; b.textContent = '更新中';
+  try{
+    const [kid, live] = await Promise.all([
+      fetch(API+'/children').then(r=>r.json()),
+      fetch(API+'/live').then(r=>r.json())
+    ]);
+    const loc = {};
+    kid.children.forEach(c => { if (c.location && c.location.latitude) loc[c.id] = c.location; });
+
+    const seen = {};
+    S.data = live.liveData
+      .filter(x => x.entityType === 'ATTRACTION' && loc[x.id])
+      .map(x => ({
+        id:x.id, name:ja(x.name),
+        wait: ((x.queue||{}).STANDBY||{}).waitTime,
+        open: x.status === 'OPERATING',
+        la: loc[x.id].latitude, lo: loc[x.id].longitude
+      }))
+      /* 同一ライドの別バージョン（バックドロップ等）が同名で重複するので落とす */
+      .filter(x => seen[x.name] ? false : (seen[x.name] = 1));
+
+    render();
+  }catch(e){
+    document.getElementById('clv').textContent = '取得に失敗しました';
+    document.getElementById('cst').textContent = '通信環境を確認して「更新」を押してください';
+  }
+  b.dataset.busy = ''; b.textContent = '更新';
+}
+
+function render(){ crowd(); map(); rows(); logPane(); }
+
+function crowd(){
+  const ws = S.data.filter(x=>x.open && x.wait!=null).map(x=>x.wait);
+  if(!ws.length) return;
+  const avg = Math.round(ws.reduce((a,b)=>a+b,0)/ws.length);
+  const lv = avg<15 ? ['ガラガラ','今日は当たり日。人気どころから回れます']
+          : avg<25 ? ['空いてる','待ちが短い。効率よく詰められます']
+          : avg<40 ? ['ふつう','標準的な混み方。人気は先に押さえたい']
+          : avg<55 ? ['混雑','待ちが伸びています。エクスプレス検討ライン']
+          :          ['激混み','長期戦。ショーと食事で時間を使う日'];
+  document.getElementById('cs').textContent = avg;
+  document.getElementById('clv').textContent = lv[0];
+  document.getElementById('cst').textContent = lv[1] + '　/　稼働 ' + ws.length + '施設の平均';
+}
+
+function map(){
+  const done = S.log.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+  let s = '';
+  ZONES.forEach(z=>{
+    s += '<circle cx="'+px(z.lo).toFixed(1)+'" cy="'+py(z.la).toFixed(1)+'" r="'+z.r+'" fill="#16202D" opacity=".85"/>';
+  });
+  ZONES.forEach(z=>{
+    s += '<text class="zone-l" x="'+px(z.lo).toFixed(1)+'" y="'+(py(z.la)-z.r+15).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
+  });
+  if(done.length>1){
+    s += '<polyline class="route" points="'+done.map(d=>px(d.lo).toFixed(1)+','+py(d.la).toFixed(1)).join(' ')+'"/>';
+  }
+  S.data.filter(x=>x.open && x.wait!=null).forEach(x=>{
+    const X=px(x.lo), Y=py(x.la), on=S.log.includes(x.id);
+    s += '<g class="pin'+(on?' done':'')+'" data-id="'+x.id+'">'
+       +   '<circle class="dot" cx="'+X.toFixed(1)+'" cy="'+Y.toFixed(1)+'" r="16" fill="'+color(x.wait)+'"/>'
+       +   '<text x="'+X.toFixed(1)+'" y="'+Y.toFixed(1)+'">'+x.wait+'</text>'
+       +   '<text class="nm" x="'+X.toFixed(1)+'" y="'+(Y+30).toFixed(1)+'" text-anchor="middle">'+esc(x.name.slice(0,9))+'</text>'
+       + '</g>';
+  });
+  const m = document.getElementById('map');
+  m.innerHTML = s;
+  m.querySelectorAll('.pin').forEach(g => g.onclick = () => toggle(g.dataset.id));
+}
+
+function rows(){
+  let d = S.data.filter(x => S.showClosed || x.open);
+  d.sort((a,b) =>
+      S.sort==='name'  ? a.name.localeCompare(b.name,'ja')
+    : S.sort==='short' ? (a.wait??999)-(b.wait??999)
+    :                    (b.wait??-1)-(a.wait??-1));
+  document.getElementById('rows').innerHTML = d.map(x=>{
+    const on = S.log.includes(x.id);
+    const w = (!x.open || x.wait==null)
+      ? '<div class="w closed">休止</div>'
+      : '<div class="w num" style="background:'+color(x.wait)+'">'+x.wait+'<small>MIN</small></div>';
+    return '<div class="row'+(on?' done':'')+'">'+w
+      + '<div class="nm2"><b>'+esc(x.name)+'</b><span>'
+      + (on ? '記録済み' : x.open ? '待ち時間 '+(x.wait??'—')+'分' : '本日休止')
+      + '</span></div>'
+      + '<button class="add'+(on?' on':'')+'" data-id="'+x.id+'" aria-label="乗った記録">'+(on?'✓':'+')+'</button></div>';
+  }).join('');
+  document.querySelectorAll('.add').forEach(b => b.onclick = () => toggle(b.dataset.id));
+}
+
+function toggle(id){
+  const i = S.log.indexOf(id);
+  if(i>=0) S.log.splice(i,1); else S.log.push(id);
+  save(); render();
+}
+
+function logPane(){
+  const el = document.getElementById('p-log');
+  const items = S.log.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+  if(!items.length){
+    el.innerHTML = '<div class="empty">まだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ルートと戦績がここに残ります。</div>';
+    return;
+  }
+  const wait = items.reduce((a,b)=>a+(b.wait||0),0);
+  let dist = 0;
+  for(let i=1;i<items.length;i++) dist += meters(items[i-1], items[i]);
+  /* ponytail: 移動距離は記録順の直線距離の合計。実際の順路より短く出る。
+     GPSを入れるならここを置き換える */
+  el.innerHTML =
+    '<div class="stats">'
+    + '<div class="st hero"><div class="k">CONQUERED</div><div class="v dsp num">'+items.length+'<em>アトラクション制覇</em></div></div>'
+    + '<div class="st"><div class="k">TOTAL WAIT</div><div class="v dsp num">'+wait+'<em>分 並んだ</em></div></div>'
+    + '<div class="st"><div class="k">DISTANCE</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km 歩いた</em></div></div>'
+    + '</div>'
+    + '<ol class="tl">' + items.map(x =>
+        '<li>'+esc(x.name)+'<small class="num">'+(x.wait!=null?x.wait+'分待ち':'—')+'</small></li>').join('')
+    + '</ol>'
+    + '<button class="danger" id="cr">今日の記録をリセット</button>';
+  document.getElementById('cr').onclick = () => {
+    if(confirm('今日の記録を全部消します。よろしいですか？')){ S.log=[]; save(); render(); }
+  };
+}
+
+/* ── UI配線 ── */
+document.getElementById('rf').onclick = load;
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(o => o.setAttribute('aria-selected', o===t));
+  document.getElementById('p-list').classList.toggle('hide', t.dataset.t!=='list');
+  document.getElementById('p-log').classList.toggle('hide', t.dataset.t!=='log');
+});
+document.querySelectorAll('[data-s]').forEach(c => c.onclick = () => {
+  S.sort = c.dataset.s;
+  document.querySelectorAll('[data-s]').forEach(o => o.setAttribute('aria-pressed', o===c));
+  rows();
+});
+document.getElementById('cl').onclick = function(){
+  S.showClosed = !S.showClosed;
+  this.setAttribute('aria-pressed', S.showClosed);
+  this.textContent = S.showClosed ? '休止中を隠す' : '休止中も表示';
+  rows();
+};
+
+load();
+setInterval(load, 60000);   // 1分ごとに自動更新
+</script>
+</body>
+</html>
