@@ -371,9 +371,21 @@ function map(){
   if(done.length>1){
     s += '<polyline class="route" points="'+done.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
   }
-  /* 名前は上下交互。ピンを離しても文字幅までは吸収できないため */
-  pts.forEach((p,i)=>{
-    const on = S.log.includes(p.id), ly = p.y + (i%2 ? 29 : -21);
+  /* ピンを離しても文字幅までは吸収できないので、
+     ラベルは上下4段の候補から先に置いた箱と当たらない位置を選ぶ */
+  const boxes = [];
+  const slot = p => {
+    const w = Math.min(p.name.length,8)*8.4;
+    for(const dy of [29,-21,41,-33,53]){
+      const b = {x1:p.x-w/2, x2:p.x+w/2, y1:p.y+dy-7, y2:p.y+dy+4};
+      if(!boxes.some(o => b.x1<o.x2 && b.x2>o.x1 && b.y1<o.y2 && b.y2>o.y1)){
+        boxes.push(b); return p.y+dy;
+      }
+    }
+    return p.y+29;
+  };
+  pts.forEach(p=>{
+    const on = S.log.includes(p.id), ly = slot(p);
     s += '<g class="pin'+(on?' done':'')+'" data-id="'+p.id+'">'
        +   '<title>'+esc(p.name)+' / '+p.wait+'分待ち</title>'
        +   '<circle class="dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="15" fill="'+color(p.wait)+'"/>'
