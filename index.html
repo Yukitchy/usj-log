@@ -377,13 +377,13 @@ function map(){
   const boxes = pts.map(p => ({x1:p.x-17, x2:p.x+17, y1:p.y-17, y2:p.y+17}));
   const slot = p => {
     const w = Math.min(p.name.length,8)*8.4;
-    for(const dy of [29,-21,41,-33,53]){
+    for(const dy of [29,-21,41,-33,53,-45,65,-57]){
       const b = {x1:p.x-w/2, x2:p.x+w/2, y1:p.y+dy-7, y2:p.y+dy+4};
       if(!boxes.some(o => b.x1<o.x2 && b.x2>o.x1 && b.y1<o.y2 && b.y2>o.y1)){
         boxes.push(b); return p.y+dy;
       }
     }
-    return p.y+29;
+    return null;   /* 置き場所が無ければ描かない。名前はリストと吹き出しにある */
   };
   pts.forEach(p=>{
     const on = S.log.includes(p.id), ly = slot(p);
@@ -391,7 +391,8 @@ function map(){
        +   '<title>'+esc(p.name)+' / '+p.wait+'分待ち</title>'
        +   '<circle class="dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="15" fill="'+color(p.wait)+'"/>'
        +   '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'">'+p.wait+'</text>'
-       +   '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(p.name.slice(0,8))+'</text>'
+       +   (ly===null ? '' :
+           '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(p.name.slice(0,8))+'</text>')
        + '</g>';
   });
   const m = document.getElementById('map');
