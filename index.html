@@ -218,13 +218,14 @@ svg.map:active{cursor:grabbing}
 /* ヘッダー内プレーヤー（🍯が再生中はこれに変わる・操作を塞がない） */
 .hplay[hidden]{display:none}
 .hplay{display:flex;align-items:center;gap:5px;background:var(--bg2);
-  border:1px solid var(--gold);border-radius:999px;padding:3px 5px 3px 3px}
-#sp-embed{width:86px;aspect-ratio:16/9;border-radius:999px;overflow:hidden;background:#000;flex:none}
-#sp-embed iframe{display:block;width:100%;height:100%;border:0}
+  border:1px solid var(--gold);border-radius:999px;padding:4px 5px}
+.ytoff{position:fixed;left:-9999px;top:0;width:240px;height:135px;pointer-events:none}
+.hplay b{font-size:11.5px;font-weight:900;white-space:nowrap;padding-right:2px}
+.mnote{font-size:12px;color:var(--gold);padding-left:6px}
 .hplay button{border:0;background:transparent;color:var(--sub);font:inherit;font-size:12px;
   width:20px;height:20px;border-radius:999px;cursor:pointer;line-height:1;flex:none}
 .hplay button:hover{background:var(--card);color:var(--bad)}
-@media(max-width:400px){#sp-embed{width:66px}}
+@media(max-width:400px){.hplay b{display:none}}
 
 /* 天気 */
 .wx{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg2);
@@ -403,7 +404,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
     <button class="wx" id="wx" aria-label="天気予報"><span id="wxi">·</span><b id="wxt">--</b></button>
     <button class="honey" id="hn" aria-label="くまのプーさんを再生">🍯</button>
     <div class="hplay" id="mini" hidden>
-      <div id="sp-embed"></div>
+      <span class="mnote">♪</span>
+      <b>くまのプーさん</b>
+      <button id="mnp" aria-label="再生・一時停止">⏸</button>
       <button id="mnx" aria-label="止める">✕</button>
     </div>
     <button class="rf" id="rf">更新</button>
@@ -462,6 +465,7 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 
 </main>
 
+<div class="ytoff" aria-hidden="true"><div id="sp-embed"></div></div>
 <input type="file" id="pick" accept="image/*,video/*" multiple hidden>
 <div class="viewer" id="vw" hidden><div class="vw-in" id="vwin"></div></div>
 <div class="sheet" id="det" hidden><div class="sheet-in" id="detin"></div></div>
@@ -1225,17 +1229,43 @@ function logPane(){
 /* YouTubeは start= で頭出しできる（Spotifyの埋め込みは不可だった）。
    iframe はボタンを押した瞬間に差し込む＝ユーザー操作扱いになり自動再生が通りやすい */
 const VID = 'hcta0Wj5is8', CUE = 24;
+/* 映像は出さない。iframe を消すと音も止まるので画面外に置いたまま、
+   YouTube IFrame API で自前のバーから操作する */
+let YTP = null, ytWant = false;
+window.onYouTubeIframeAPIReady = () => {
+  YTP = new YT.Player('sp-embed', {
+    videoId: VID, host: 'https://www.youtube-nocookie.com',
+    playerVars: {start:CUE, autoplay:1, playsinline:1, rel:0, controls:0},
+    events: {
+      onReady: e => { if(ytWant){ e.target.seekTo(CUE); e.target.playVideo(); } },
+      onStateChange: e => {
+        const on = e.data === YT.PlayerState.PLAYING;
+        document.getElementById('mnp').textContent = on ? '⏸' : '▶';
+      }
+    }
+  });
+};
 (function music(){
-  const mini = document.getElementById('mini'), box = document.getElementById('sp-embed');
-  const hn = document.getElementById('hn');
-  const stop = () => { mini.hidden = true; hn.hidden = false; box.innerHTML = ''; };
+  const mini = document.getElementById('mini'), hn = document.getElementById('hn');
   hn.onclick = () => {
-    mini.hidden = false; hn.hidden = true;   /* 🍯 がプレーヤーに変わる */
-    box.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + VID
-      + '?start=' + CUE + '&autoplay=1&rel=0&playsinline=1" frameborder="0" title="くまのプーさん"'
-      + ' allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+    mini.hidden = false; hn.hidden = true;    /* 🍯 がバーに変わる */
+    ytWant = true;
+    if(!YTP){
+      if(!window.YT){
+        const t = document.createElement('script');
+        t.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(t);
+      }
+    }else{ YTP.seekTo(CUE); YTP.playVideo(); }
   };
-  document.getElementById('mnx').onclick = stop;
+  document.getElementById('mnp').onclick = () => {
+    if(!YTP) return;
+    YTP.getPlayerState() === 1 ? YTP.pauseVideo() : YTP.playVideo();
+  };
+  document.getElementById('mnx').onclick = () => {
+    ytWant = false; mini.hidden = true; hn.hidden = false;
+    if(YTP) YTP.stopVideo();
+  };
 })();
 
 /* ── 天気（Open-Meteo・キー不要・CORS可） ── */
