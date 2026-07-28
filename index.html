@@ -7,9 +7,7 @@
 <meta name="theme-color" content="#0E141C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
-<script src="https://open.spotify.com/embed/iframe-api/v1.js" async></script>
-<style>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet"><style>
 :root{
   --bg:#0E141C;          /* 地：夜の藍 */
   --bg2:#151E29;
@@ -427,9 +425,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 <div class="sheet" id="sh" hidden>
   <div class="sheet-in">
     <h3>くまのプーさん</h3>
-    <p>歌い出し（0:24）から再生します</p>
+    <p>▶ を押すと再生（歌い出しは 0:24）</p>
     <div id="sp-embed"></div>
-    <p class="note-s">音が出ない時は下のリンクからどうぞ。Spotifyにログインしていないと30秒だけの再生になります。</p>
+    <p class="note-s">Spotify側の仕様で頭出しはできません。ログインしていないと30秒だけの再生になります。</p>
     <a id="m-sp" href="#" target="_blank" rel="noopener"><i>🟢</i>Spotify アプリで開く</a>
     <a id="m-am" href="#" target="_blank" rel="noopener"><i>🍎</i>Apple Music で探す</a>
     <button class="danger" id="shx" style="width:100%;margin-top:10px">閉じる</button>
@@ -1130,26 +1128,20 @@ function logPane(){
 
 /* ── くまのプーさん ──
    Spotify公式の埋め込みプレーヤー。イントロが長いので歌い出しの0:24へ飛ばす */
-const TRACK = '3V1Qfqtb3CP3yhaeYkXV8O', CUE = 24;
-let SPC = null;
-window.onSpotifyIframeApiReady = API => {
-  API.createController(
-    document.getElementById('sp-embed'),
-    {uri:'spotify:track:'+TRACK, width:'100%', height:'152'},
-    c => { SPC = c; }
-  );
-};
+/* 頭出し（0:24）ができる Spotify の IFrame API は現在404で提供停止。
+   素の埋め込みプレーヤーを開いた時だけ差し込む（閉じれば止まる） */
+const TRACK = '3V1Qfqtb3CP3yhaeYkXV8O';
 (function music(){
   document.getElementById('m-sp').href = 'https://open.spotify.com/track/' + TRACK;
   document.getElementById('m-am').href =
     'https://music.apple.com/jp/search?term=' + encodeURIComponent('くまのプーさん 日本語版');
-  const sh = document.getElementById('sh');
-  const close = () => { sh.hidden = true; if(SPC) try{ SPC.pause(); }catch(e){} };
+  const sh = document.getElementById('sh'), box = document.getElementById('sp-embed');
+  const close = () => { sh.hidden = true; box.innerHTML = ''; };
   document.getElementById('hn').onclick = () => {
     sh.hidden = false;
-    if(!SPC) return;
-    /* seek はプレーヤーが再生状態に入ってからでないと効かない */
-    try{ SPC.play(); setTimeout(()=>{ try{ SPC.seek(CUE); }catch(e){} }, 700); }catch(e){}
+    box.innerHTML = '<iframe src="https://open.spotify.com/embed/track/' + TRACK
+      + '?utm_source=generator" width="100%" height="152" frameborder="0" loading="lazy"'
+      + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" title="くまのプーさん"></iframe>';
   };
   document.getElementById('shx').onclick = close;
   sh.onclick = e => { if(e.target === sh) close(); };
