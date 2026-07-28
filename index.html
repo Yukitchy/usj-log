@@ -1010,7 +1010,11 @@ function toggle(id){
 
 /* ── 日別ストリップ。選んだ日のルートと戦績を見る ── */
 function dayStrip(){
-  const days = Object.keys(S.hist.days).filter(d => S.hist.days[d].length).sort().reverse();
+  /* 乗った記録がある日 ＋ 写真だけある日（過去回を後から取り込んだ場合） */
+  const days = [...new Set([
+    ...Object.keys(S.hist.days).filter(d => S.hist.days[d].length),
+    ...S.media.map(m => m.day)
+  ])].filter(Boolean).sort().reverse();
   const el = document.getElementById('ds');
   if(!days.length){
     el.innerHTML = '<div class="empty">まだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ここに来園日が並びます。</div>';
