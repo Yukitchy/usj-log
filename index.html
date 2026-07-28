@@ -148,6 +148,10 @@ svg.map:active{cursor:grabbing}
   background:var(--sub);transition:transform .16s var(--ease-out),background .16s ease}
 .sw.on i{background:color-mix(in srgb,var(--accent) 60%,var(--bg2))}
 .sw.on i::after{transform:translateX(16px);background:#fff}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;
+  max-width:min(92vw,470px);background:var(--card);border:1px solid var(--sky);border-radius:14px;
+  padding:13px 17px;font-size:12.5px;font-weight:800;line-height:1.75;
+  box-shadow:0 14px 38px rgba(0,0,0,.5);animation:up .3s var(--ease-out) both}
 .mbtn{border:1px solid var(--line);background:var(--bg2);color:var(--sub);border-radius:10px;
   width:34px;height:34px;font-size:15px;cursor:pointer;line-height:1;
   transition:transform .12s var(--spring),border-color .12s ease}
@@ -1023,6 +1027,69 @@ function dayStrip(){
   });
 }
 
+
+/* ── 写真のジオタグ読み取り（ライブラリ無し・JPEGのEXIFを直読み） ──
+   iPhoneはSafariのファイル選択でHEIC→JPEGに変換されるので実用上これで足りる。
+   ponytail: JPEG以外はGPS無し扱い。必要になったらHEIFパーサを足す */
+function readIFD(v, tiff, p, le){
+  const u16 = q => v.getUint16(q, le), u32 = q => v.getUint32(q, le);
+  const n = u16(p), out = {};
+  for(let i=0;i<n;i++){
+    const e = p+2+i*12, tag = u16(e), type = u16(e+2), cnt = u32(e+4);
+    const sz = ({1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8})[type] || 1;
+    out[tag] = {type, cnt, off: sz*cnt <= 4 ? e+8 : tiff + u32(e+8)};
+  }
+  return out;
+}
+async function exifOf(file){
+  try{
+    const buf = await file.slice(0, 384*1024).arrayBuffer(), v = new DataView(buf);
+    if(v.getUint16(0) !== 0xFFD8) return null;                 /* JPEGでなければ諦める */
+    let o = 2, tiff = -1;
+    while(o < v.byteLength - 4){
+      const mk = v.getUint16(o);
+      if((mk & 0xFF00) !== 0xFF00) return null;
+      if(mk === 0xFFE1 && v.getUint32(o+4) === 0x45786966){ tiff = o + 10; break; }
+      o += 2 + v.getUint16(o+2);
+    }
+    if(tiff < 0) return null;
+    const le = v.getUint16(tiff) === 0x4949;
+    const u32 = q => v.getUint32(q, le);
+    const ifd0 = readIFD(v, tiff, tiff + u32(tiff+4), le);
+    const rat = q => u32(q) / u32(q+4);
+    const dms = f => rat(f.off) + rat(f.off+8)/60 + rat(f.off+16)/3600;
+    const asc = f => String.fromCharCode(v.getUint8(f.off));
+    const out = {};
+    if(ifd0[0x8825]){
+      const g = readIFD(v, tiff, tiff + u32(ifd0[0x8825].off), le);
+      if(g[1] && g[2] && g[3] && g[4]){
+        out.la = dms(g[2]) * (asc(g[1]) === 'S' ? -1 : 1);
+        out.lo = dms(g[4]) * (asc(g[3]) === 'W' ? -1 : 1);
+      }
+    }
+    if(ifd0[0x8769]){
+      const ex = readIFD(v, tiff, tiff + u32(ifd0[0x8769].off), le);
+      const d = ex[0x9003] || ex[0x9004];
+      if(d){
+        let str = '';
+        for(let i=0;i<10;i++) str += String.fromCharCode(v.getUint8(d.off+i));
+        if(/^\d{4}:\d{2}:\d{2}$/.test(str)) out.day = str.replace(/:/g,'-');
+      }
+    }
+    return out;
+  }catch(e){ return null; }
+}
+/* 撮った場所からいちばん近い施設へ。70mより遠ければどこにも付けない */
+function nearest(la, lo){
+  let best = null, bd = 1e9;
+  (S.all.length ? S.all : S.data).forEach(a=>{
+    if(a.la == null) return;
+    const d = meters({la,lo}, a);
+    if(d < bd){ bd = d; best = a; }
+  });
+  return bd <= 70 ? best : null;
+}
+
 /* ── 写真・動画を足す ── */
 let pickFor = null;
 function addMedia(id){
@@ -1032,19 +1099,38 @@ function addMedia(id){
 }
 document.getElementById('pick').onchange = async function(){
   if(!pickFor || !this.files.length) return;
-  const a = S.data.find(x=>x.id===pickFor);
+  const bulk = pickFor === '*';
+  let placed = 0, total = 0;
   for(const f of this.files){
+    total++;
+    let ride = bulk ? null : pickFor, day = today(), name = '';
+    const ex = bulk || true ? await exifOf(f) : null;
+    if(ex && ex.day) day = ex.day;                    /* 撮影日でその日の記録に入る */
+    if(bulk && ex && ex.la != null){
+      const near = nearest(ex.la, ex.lo);
+      if(near){ ride = near.id; name = near.name; placed++; }
+    }
+    if(!bulk){ const a = poi(pickFor); name = a ? a.name : ''; }
     await mediaPut({
-      k: pickFor + '_' + f.name + '_' + f.size + '_' + f.lastModified,
-      day: today(), ride: pickFor, name: a ? a.name : '',
+      k: (ride||'_') + '_' + f.name + '_' + f.size + '_' + f.lastModified,
+      day, ride: ride || '', name,
       kind: f.type.startsWith('video') ? 'video' : 'image',
+      la: ex ? ex.la : undefined, lo: ex ? ex.lo : undefined,
       blob: f
     });
   }
   this.value = ''; pickFor = null;
   S.media = await mediaAll();
   render();
+  if(bulk) toast(total + '枚を取り込みました。うち ' + placed + '枚を撮った場所の施設に自動で振り分けました。'
+    + (placed < total ? '（残りは位置情報が無いか、施設から70m以上離れた場所です）' : ''));
 };
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 6000);
+}
 
 /* ── 拡大ビューア ── */
 function openViewer(list, i){
@@ -1198,12 +1284,16 @@ function planPane(){
 /* ── アルバム ── */
 function albumPane(){
   const el = document.getElementById('p-alb');
+  const head = '<button class="act big" id="imp" style="width:100%">📥 写真をまとめて取り込む</button>'
+    + '<p class="note-s">選ぶだけで、写真の位置情報から撮った場所を判定して、'
+    + 'その施設のピンに自動で刺します。撮影日ごとに分けて保存します。</p>';
   if(!S.media.length){
-    el.innerHTML = '<div class="empty">まだ写真がありません。<br>戦績タブの各アトラクションの <b>📷</b> から、<br>その場で撮った写真・動画を足せます。</div>';
+    el.innerHTML = head + '<div class="empty">まだ写真がありません。<br>上のボタンか、戦績タブの <b>📷</b> から足せます。</div>';
+    document.getElementById('imp').onclick = () => { pickFor = '*'; document.getElementById('pick').click(); };
     return;
   }
   const days = [...new Set(S.media.map(m=>m.day))].sort().reverse();
-  el.innerHTML = days.map(d=>{
+  el.innerHTML = head + days.map(d=>{
     const ms = S.media.filter(m=>m.day===d);
     return '<h2 class="sec">'+fmtDay(d)+'<small>　'+ms.length+'点</small></h2><div class="grid-m">'
       + ms.map(m => '<button class="th" data-d="'+d+'" data-k="'+m.k+'">'
