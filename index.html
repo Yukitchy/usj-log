@@ -153,6 +153,40 @@ svg.map:active{cursor:grabbing}
   max-width:min(92vw,470px);background:var(--card);border:1px solid var(--sky);border-radius:14px;
   padding:13px 17px;font-size:12.5px;font-weight:800;line-height:1.75;
   box-shadow:0 14px 38px rgba(0,0,0,.5);animation:up .3s var(--ease-out) both}
+
+/* 混雑予想カレンダー */
+.crowd{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  border:1px solid var(--line);appearance:none}
+.crowd:hover{border-color:var(--sky)}
+.calgo{position:absolute;right:14px;bottom:11px;font-size:10.5px;font-weight:800;color:var(--sky)}
+.sheet-in.wide{max-width:560px}
+.calnav{display:flex;align-items:center;justify-content:center;gap:14px;margin:14px 0 10px}
+.calnav button{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--ink);font:inherit;font-size:16px;cursor:pointer}
+.calnav button:hover{border-color:var(--sky);color:var(--sky)}
+.calnav b{font-size:15px;font-weight:900;min-width:130px;text-align:center}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cw{text-align:center;font-size:9.5px;font-weight:800;color:var(--sub);padding-bottom:3px}
+.cw.s{color:#F0554E}.cw.t{color:#4FB0FF}
+.cd{aspect-ratio:1/1.12;border-radius:9px;border:1px solid var(--line);background:var(--bg2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font:inherit;cursor:pointer;padding:2px;transition:transform .12s var(--ease-out)}
+.cd:hover{transform:translateY(-2px)}
+.cd.void{border:0;background:transparent;pointer-events:none}
+.cd b{font-size:11.5px;font-weight:900;line-height:1}
+.cd i{font-style:normal;font-size:9.5px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.cd s{text-decoration:none;font-size:7.5px;font-weight:800;opacity:.75;line-height:1}
+.cd.hol b{color:#F0554E}
+.cd.sat b{color:#4FB0FF}
+.cd.today{outline:2px solid var(--accent);outline-offset:1px}
+.cd.real{border-style:solid;border-width:2px}
+.callg{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin:12px 0 4px}
+.callg span{font-size:10px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:4px}
+.callg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.caldet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  font-size:12px;line-height:1.8;margin-top:8px;min-height:56px;color:var(--sub)}
+.caldet b{color:var(--ink);font-size:13px;display:block;margin-bottom:2px}
+.caldet em{font-style:normal;color:var(--sky);font-weight:800}
 .pkpick{display:flex;gap:6px;margin-bottom:4px}
 .pk2{flex:1;border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:13px;
   padding:11px 8px;font:inherit;cursor:pointer;text-align:center;
@@ -449,13 +483,14 @@ const MAPVER = 4;</script>
 
 <main class="wrap">
 
-  <div class="crowd">
+  <button class="crowd" id="cal">
     <div><span class="big dsp num" id="cs">--</span><span class="u">分</span></div>
     <div class="meta">
       <div class="lv" id="clv">読み込み中</div>
       <div class="sub" id="cst">全アトラクションの平均待ち時間</div>
     </div>
-  </div>
+    <span class="calgo">📅 混雑予想</span>
+  </button>
 
   <div class="mapcard">
     <div class="mapbox">
@@ -503,6 +538,17 @@ const MAPVER = 4;</script>
 <div class="viewer" id="vw" hidden><div class="vw-in" id="vwin"></div></div>
 <div class="sheet" id="det" hidden><div class="sheet-in" id="detin"></div></div>
 
+<div class="sheet" id="cals" hidden>
+  <div class="sheet-in wide">
+    <h3 id="calt">混雑予想</h3>
+    <p id="calp">土日祝・長期休暇・公式の営業時間から、その日の平均待ち時間を見積もります</p>
+    <div class="calnav"><button id="cprev">‹</button><b id="cmon"></b><button id="cnext">›</button></div>
+    <div class="calgrid" id="calg"></div>
+    <div class="callg" id="callg"></div>
+    <div class="caldet" id="cald"></div>
+  </div>
+</div>
+
 <div class="sheet" id="mns" hidden>
   <div class="sheet-in">
     <h3>パーク</h3>
@@ -537,13 +583,13 @@ const MAPVER = 4;</script>
 /* ── パーク定義。違うのはデータだけなので、ここを足せば園が増える ── */
 const PARKS = {
   usj:{n:'ユニバーサル・スタジオ・ジャパン', s:'USJ',
-       api:'47f61fac-7586-41ac-ae80-61c9257cf33e', wx:[34.6655,135.4323],
+       api:'47f61fac-7586-41ac-ae80-61c9257cf33e', wx:[34.6655,135.4323], base:44,
        gate:{la:34.66647, lo:135.43656}, lagoon:{la:34.66605, lo:135.43272, n:'ラグーン'}},
   tdl:{n:'東京ディズニーランド', s:'TDL',
-       api:'3cc919f1-d16d-43e0-8c3f-1dd269bd1a42', wx:[35.6329,139.8804],
+       api:'3cc919f1-d16d-43e0-8c3f-1dd269bd1a42', wx:[35.6329,139.8804], base:38,
        gate:{la:35.63504, lo:139.87923}},
   tds:{n:'東京ディズニーシー', s:'TDS',
-       api:'67b290d5-3478-4f23-b601-2f8fb71ba803', wx:[35.6267,139.8850],
+       api:'67b290d5-3478-4f23-b601-2f8fb71ba803', wx:[35.6267,139.8850], base:40,
        gate:{la:35.62703, lo:139.88909}}
 };
 let PK = localStorage.getItem('parklog.pk') || 'usj';
@@ -910,10 +956,21 @@ async function load(){
   const b = document.getElementById('rf');
   b.dataset.busy = '1'; b.textContent = '更新中';
   try{
-    const [kid, live] = await Promise.all([
+    const [kid, live, sch] = await Promise.all([
       fetch(API()+'/children').then(r=>r.json()),
-      fetch(API()+'/live').then(r=>r.json())
+      fetch(API()+'/live').then(r=>r.json()),
+      fetch(API()+'/schedule').then(r=>r.json()).catch(()=>null)
     ]);
+    if(sch && sch.schedule){                      /* 公式の営業時間＝混雑の先行指標 */
+      S.sched = {};
+      sch.schedule.filter(x=>x.type==='OPERATING').forEach(x=>{
+        const o = x.openingTime.slice(11,16), c = x.closingTime.slice(11,16);
+        const mm = t => (+t.slice(0,2))*60 + (+t.slice(3,5));
+        S.sched[x.date] = {o, c, mins: (mm(c) - mm(o) + 1440) % 1440};
+      });
+      const all = Object.values(S.sched).map(x=>x.mins).sort((a,b)=>a-b);
+      S.schedBase = all[Math.floor(all.length/2)];   /* 期間中央値を基準にする */
+    }
     const loc = {};
     kid.children.forEach(c => { if (c.location && c.location.latitude) loc[c.id] = c.location; });
 
@@ -1006,6 +1063,11 @@ function crowd(){
           : avg<55 ? ['混雑','待ちが伸びています。エクスプレス検討ライン']
           :          ['激混み','長期戦。ショーと食事で時間を使う日'];
   document.getElementById('cs').textContent = avg;
+  /* 実測を残す。溜まるほど予想の倍率が正確になる */
+  S.hist.avg = S.hist.avg || {};
+  const prev = S.hist.avg[today()];
+  S.hist.avg[today()] = prev == null ? avg : Math.round((prev*3 + avg)/4);
+  calibrate(); save();
   document.getElementById('clv').textContent = lv[0];
   document.getElementById('cst').textContent = lv[1] + '　/　稼働 ' + ws.length + '施設の平均';
 }
@@ -1724,8 +1786,142 @@ async function weather(){
 })();
 weather();
 
+/* ── 混雑予想カレンダー ───────────────────────────────────────
+   人数は予想できないので、このアプリが実際に測っている「平均待ち時間」で出す。
+   材料は ①曜日 ②祝日 ③長期休暇 ④公式の営業時間（混む日ほど開園が早く閉園が遅い）。
+   実際に観測した日の平均は保存しておき、予想の倍率を自動で補正する。 */
+
+/* 日本の祝日。春分・秋分は近似式（2100年まで±1日以内） */
+function holidayJP(y, m, d){
+  const nth = (mm, wd, n) => {            /* m月の第n wd曜日 */
+    const first = new Date(y, mm-1, 1).getDay();
+    return 1 + ((wd - first + 7) % 7) + (n-1)*7;
+  };
+  const eq = mo => Math.floor(mo===3 ? 20.8431 + 0.242194*(y-1980) - Math.floor((y-1980)/4)
+                                     : 23.2488 + 0.242194*(y-1980) - Math.floor((y-1980)/4));
+  const T = {
+    '1-1':'元日', ['1-'+nth(1,1,2)]:'成人の日', '2-11':'建国記念の日', '2-23':'天皇誕生日',
+    ['3-'+eq(3)]:'春分の日', '4-29':'昭和の日', '5-3':'憲法記念日', '5-4':'みどりの日', '5-5':'こどもの日',
+    ['7-'+nth(7,1,3)]:'海の日', '8-11':'山の日', ['9-'+nth(9,1,3)]:'敬老の日', ['9-'+eq(9)]:'秋分の日',
+    ['10-'+nth(10,1,2)]:'スポーツの日', '11-3':'文化の日', '11-23':'勤労感謝の日'
+  };
+  const hit = T[m+'-'+d];
+  if(hit) return hit;
+  /* 振替休日：前日が日曜の祝日 */
+  const pv = new Date(y, m-1, d-1);
+  if(new Date(y,m-1,d).getDay()===1 && T[(pv.getMonth()+1)+'-'+pv.getDate()]) return '振替休日';
+  return null;
+}
+/* 学校の長期休暇・大型連休 */
+function season(m, d){
+  if(m===8 && d>=13 && d<=16) return {n:'お盆', k:1.30};
+  if((m===4 && d>=29) || (m===5 && d<=5)) return {n:'ゴールデンウィーク', k:1.45};
+  if((m===7 && d>=20) || m===8) return {n:'夏休み', k:1.15};
+  if((m===12 && d>=25) || (m===1 && d<=7)) return {n:'年末年始', k:1.28};
+  if((m===3 && d>=20) || (m===4 && d<=5)) return {n:'春休み', k:1.20};
+  return null;
+}
+const LV = [
+  {t:18, n:'空いてる',   c:'#3FBF6F'},
+  {t:30, n:'やや空き',   c:'#8BC34A'},
+  {t:42, n:'ふつう',     c:'#F5B942'},
+  {t:56, n:'混雑',       c:'#F58B3C'},
+  {t:999,n:'激混み',     c:'#F0554E'}
+];
+const lvOf = v => LV.find(l => v < l.t) || LV[4];
+
+/* 予想。返り値は平均待ち分と、その根拠 */
+function forecast(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  const wd = new Date(y, m-1, d).getDay();
+  const why = [];
+  let k = 1;
+  const hol = holidayJP(y,m,d);
+  if(hol){ k *= 1.25; why.push(hol); }
+  if(wd===6){ k *= 1.30; why.push('土曜'); }
+  else if(wd===0){ k *= 1.20; why.push('日曜'); }
+  else if(wd===5){ k *= 0.95; why.push('金曜'); }
+  else { k *= 0.80; why.push('平日'); }
+  const se = season(m,d);
+  if(se){ k *= se.k; why.push(se.n); }
+  /* 公式の営業時間。基準より長い日は park 側が混雑を見込んでいる */
+  const sc = (S.sched||{})[iso];
+  if(sc){
+    const base = S.schedBase || sc.mins;
+    const dh = (sc.mins - base) / 60;
+    if(Math.abs(dh) >= 0.5){
+      k *= (1 + 0.07*dh);
+      why.push('営業' + (dh>0 ? '延長' : '短縮') + (dh>0?'+':'') + (Math.round(dh*10)/10) + 'h');
+    }
+  }
+  const base = (P().base || 40) * (S.hist.calfit || 1);
+  return {v: Math.round(base * k), why, hol, sc};
+}
+/* 実測が溜まったら倍率を補正する */
+function calibrate(){
+  const a = S.hist.avg || {}, ks = Object.keys(a);
+  if(ks.length < 3){ S.hist.calfit = 1; return; }
+  const r = ks.map(d => {
+    const save = S.hist.calfit; S.hist.calfit = 1;
+    const f = forecast(d).v; S.hist.calfit = save;
+    return f ? a[d]/f : 1;
+  }).sort((x,y)=>x-y);
+  S.hist.calfit = Math.max(0.6, Math.min(1.6, r[Math.floor(r.length/2)]));   /* 中央値。外れ値に強い */
+}
+
+let calM = null;      /* 表示中の月（Dateの1日） */
+function calRender(){
+  const t = new Date();
+  if(!calM) calM = new Date(t.getFullYear(), t.getMonth(), 1);
+  document.getElementById('cmon').textContent =
+    calM.getFullYear() + '年' + (calM.getMonth()+1) + '月';
+  document.getElementById('calt').textContent = P().s + 'の混雑予想';
+  const y = calM.getFullYear(), m = calM.getMonth();
+  const first = new Date(y, m, 1).getDay(), last = new Date(y, m+1, 0).getDate();
+  const iso = d => y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  let h = ['日','月','火','水','木','金','土']
+    .map((w,i)=>'<div class="cw'+(i===0?' s':i===6?' t':'')+'">'+w+'</div>').join('');
+  for(let i=0;i<first;i++) h += '<div class="cd void"></div>';
+  for(let d=1; d<=last; d++){
+    const k = iso(d), f = forecast(k), real = (S.hist.avg||{})[k];
+    const v = real != null ? real : f.v, lv = lvOf(v);
+    const wd = new Date(y,m,d).getDay();
+    h += '<button class="cd'+(f.hol||wd===0?' hol':wd===6?' sat':'')
+      + (k===today()?' today':'') + (real!=null?' real':'') + '" data-d="'+k+'"'
+      + ' style="border-color:'+lv.c+(real!=null?';background:color-mix(in srgb,'+lv.c+' 20%,var(--bg2))':'')+'">'
+      + '<b>'+d+'</b><i style="color:'+lv.c+'">'+v+'</i><s>'+(real!=null?'実測':'分')+'</s></button>';
+  }
+  document.getElementById('calg').innerHTML = h;
+  document.getElementById('callg').innerHTML =
+    LV.map(l=>'<span><i style="background:'+l.c+'"></i>'+l.n+'</span>').join('')
+    + '<span><i style="background:var(--sub)"></i>枠が太い日＝実測</span>';
+  document.querySelectorAll('.cd[data-d]').forEach(b => b.onclick = () => calDetail(b.dataset.d));
+  calDetail(calM.getMonth()===t.getMonth() && calM.getFullYear()===t.getFullYear() ? today() : iso(1));
+}
+function calDetail(k){
+  const f = forecast(k), real = (S.hist.avg||{})[k];
+  const v = real != null ? real : f.v, lv = lvOf(v);
+  const [y,m,d] = k.split('-').map(Number);
+  const wd = ['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
+  document.getElementById('cald').innerHTML =
+    '<b>' + m + '月' + d + '日(' + wd + ')　<em style="color:'+lv.c+'">' + lv.n + '</em>'
+    + '　平均' + v + '分' + (real!=null ? '（実測）' : '（予想）') + '</b>'
+    + f.why.join(' / ')
+    + (f.sc ? '　営業 ' + f.sc.o + '–' + f.sc.c : '')
+    + (real==null && S.hist.calfit && Math.abs(S.hist.calfit-1)>0.02
+        ? '<br>実測' + Object.keys(S.hist.avg||{}).length + '日分で補正済み（×'
+          + (Math.round(S.hist.calfit*100)/100) + '）' : '');
+}
+
 /* ── UI配線 ── */
 document.getElementById('rf').onclick = load;
+(function calUI(){
+  const sh = document.getElementById('cals');
+  document.getElementById('cal').onclick = () => { calM = null; sh.hidden = false; calRender(); };
+  sh.onclick = e => { if(e.target === sh) sh.hidden = true; };
+  document.getElementById('cprev').onclick = () => { calM.setMonth(calM.getMonth()-1); calRender(); };
+  document.getElementById('cnext').onclick = () => { calM.setMonth(calM.getMonth()+1); calRender(); };
+})();
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(o => o.setAttribute('aria-selected', o===t));
   ['list','plan','log','alb'].forEach(k =>
