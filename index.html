@@ -215,23 +215,16 @@ svg.map:active{cursor:grabbing}
 .desc{font-size:13px;line-height:1.85}
 .desc.dim{color:var(--sub);font-size:12px}
 .note-s{font-size:10.5px;color:var(--sub);line-height:1.75;margin:10px 0;font-weight:700}
-/* ミニプレーヤー（常駐・アプリ操作を塞がない） */
-.mini[hidden]{display:none}
-.mini{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:55;
-  width:214px;background:var(--card);border:1px solid var(--line);border-radius:14px;
-  box-shadow:0 14px 38px rgba(0,0,0,.5);overflow:hidden;
-  animation:up .3s var(--ease-out) both}
-.mini-h{display:flex;align-items:center;gap:6px;padding:7px 8px 7px 11px}
-.mini-h b{flex:1;min-width:0;font-size:11.5px;font-weight:900;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.mini-h button{border:0;background:transparent;color:var(--sub);font:inherit;font-size:13px;
-  width:22px;height:22px;border-radius:7px;cursor:pointer;line-height:1}
-.mini-h button:hover{background:var(--bg2);color:var(--ink)}
-#sp-embed{aspect-ratio:16/9;background:#000}
+/* ヘッダー内プレーヤー（🍯が再生中はこれに変わる・操作を塞がない） */
+.hplay[hidden]{display:none}
+.hplay{display:flex;align-items:center;gap:5px;background:var(--bg2);
+  border:1px solid var(--gold);border-radius:999px;padding:3px 5px 3px 3px}
+#sp-embed{width:86px;aspect-ratio:16/9;border-radius:999px;overflow:hidden;background:#000;flex:none}
 #sp-embed iframe{display:block;width:100%;height:100%;border:0}
-.mini.sm{width:150px}
-.mini.sm #sp-embed{height:2px;aspect-ratio:auto;overflow:hidden}   /* 音は残したまま畳む */
-@media(max-width:420px){.mini{width:172px}}
+.hplay button{border:0;background:transparent;color:var(--sub);font:inherit;font-size:12px;
+  width:20px;height:20px;border-radius:999px;cursor:pointer;line-height:1;flex:none}
+.hplay button:hover{background:var(--card);color:var(--bad)}
+@media(max-width:400px){#sp-embed{width:66px}}
 
 /* 天気 */
 .wx{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg2);
@@ -409,6 +402,10 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
     <div class="logo"><b>パークログ</b><span class="dsp">USJ</span></div>
     <button class="wx" id="wx" aria-label="天気予報"><span id="wxi">·</span><b id="wxt">--</b></button>
     <button class="honey" id="hn" aria-label="くまのプーさんを再生">🍯</button>
+    <div class="hplay" id="mini" hidden>
+      <div id="sp-embed"></div>
+      <button id="mnx" aria-label="止める">✕</button>
+    </div>
     <button class="rf" id="rf">更新</button>
   </div>
 </header>
@@ -481,15 +478,6 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
   </div>
 </div>
 
-<div class="mini" id="mini" hidden>
-  <div class="mini-h">
-    <b>くまのプーさん</b>
-    <button id="mnm" aria-label="小さくする">–</button>
-    <button id="mnx" aria-label="止める">✕</button>
-  </div>
-  <div id="sp-embed"></div>
-</div>
-
 <footer>
   待ち時間データ: themeparks.wiki（非公式・数分の遅延あり）<br>
   地図は実測座標から自作したもので、公式マップではありません<br>
@@ -537,30 +525,33 @@ const ja = n => JA[n] || n;
 /* アトラクションの概要。公式の写真・文章は使えないので自分で書く。
    ponytail: 未収録は説明なしで出る。足したい時はここに1行 */
 const INFO = {
-  'ドンキーコングのクレイジー・トロッコ':{e:'🛒',t:'絶叫',d:'レールの切れ目をトロッコが飛び越える、世界初の仕掛け。見た目より揺れる。'},
-  'マリオカート 〜クッパの挑戦状〜':{e:'🐢',t:'ライド',d:'ARゴーグルで甲羅を投げながら走る。並ぶ価値があるのは中の作り込み。'},
-  'ヨッシー・アドベンチャー':{e:'🥚',t:'ファミリー',d:'屋外をゆっくり一周。エリア全体を見下ろせるので写真はここが一番。'},
-  'ハリー・ポッター・アンド・ザ・フォービドゥン・ジャーニー':{e:'🧙',t:'ライド',d:'城の中を飛び回る。並んでいる間の城内も見どころなので急がない方がいい。'},
-  'フライト・オブ・ザ・ヒッポグリフ':{e:'🦅',t:'ファミリー',d:'1分ほどの短いコースター。城を見上げる画が撮れる。'},
-  'ハリウッド・ドリーム・ザ・ライド':{e:'🎧',t:'絶叫',d:'曲を選んで乗る。垂直に上がって落ちる、パークの象徴。'},
-  'ハリウッド・ドリーム 〜バックドロップ〜':{e:'🔙',t:'絶叫',d:'同じコースを後ろ向きで。落ちる先が見えないぶん別物になる。'},
-  'ザ・フライング・ダイナソー':{e:'🦖',t:'絶叫',d:'うつ伏せでぶら下がったまま飛ぶ。国内最長・最大落差。覚悟して並ぶこと。'},
-  'ジュラシック・パーク・ザ・ライド':{e:'🚤',t:'ライド',d:'ボートで恐竜の谷へ。最後に25m落下する。前列は確実に濡れる。'},
-  'ジョーズ':{e:'🦈',t:'ライド',d:'ボートでサメに襲われる。乗り物より船長の演技を見るアトラクション。'},
-  'ミニオン・ハチャメチャ・ライド':{e:'🍌',t:'ライド',d:'巨大ドームの映像で振り回される。酔いやすい人は前日の食事から注意。'},
-  'フリーズ・レイ・スライダー':{e:'🧊',t:'ファミリー',d:'短い滑り台。子連れの合間の一本にちょうどいい。'},
-  'ヴィラン・コン ミニオン・ブラスト':{e:'🔫',t:'歩く',d:'歩きながら撃つシューティング。列の進みが早いので待ち時間の見た目ほど待たない。'},
-  'スペース・ファンタジー・ザ・ライド':{e:'🌟',t:'絶叫',d:'屋内で回転しながら進む。暗いので苦手な人は要注意。'},
-  'スペース・ファンタジー（CLUB ZEDD）':{e:'🎛',t:'絶叫',d:'期間限定の音楽版。中身は同じコース。'},
-  'スヌーピーのグレートレース':{e:'🐶',t:'ファミリー',d:'屋内のミニコースター。小さい子の最初の1本に。'},
-  'フライング・スヌーピー':{e:'✈️',t:'ファミリー',d:'ゆっくり回るだけ。待ち時間が短ければ休憩がわりに。'},
-  'ハローキティのカップケーキ・ドリーム':{e:'🎀',t:'ファミリー',d:'ほぼ記念撮影用。回転はごく穏やか。'},
-  '呪術廻戦 ザ・リアル 4-D':{e:'👁',t:'シアター',d:'座って見る4-D。期間限定なので今のうちに。'},
-  '名探偵コナン 4-Dライブ・ショー':{e:'🔍',t:'シアター',d:'生の俳優と映像を組み合わせたショー。回数が決まっている。'},
-  '名探偵コナン・ザ・ワールド':{e:'🕵️',t:'歩く',d:'歩いて回る展示型。待ち時間の割に中は空いている。'},
-  'ウォーターワールド':{e:'💥',t:'ショー',d:'屋外スタントショー。前方の席は本当にずぶ濡れになる。'}
+  'ドンキーコングのクレイジー・トロッコ':{s:'クレトロ',e:'🛒',t:'絶叫',d:'レールの切れ目をトロッコが飛び越える、世界初の仕掛け。見た目より揺れる。'},
+  'マリオカート 〜クッパの挑戦状〜':{s:'マリカー',e:'🐢',t:'ライド',d:'ARゴーグルで甲羅を投げながら走る。並ぶ価値があるのは中の作り込み。'},
+  'ヨッシー・アドベンチャー':{s:'ヨッシー',e:'🥚',t:'ファミリー',d:'屋外をゆっくり一周。エリア全体を見下ろせるので写真はここが一番。'},
+  'ハリー・ポッター・アンド・ザ・フォービドゥン・ジャーニー':{s:'ハリポタ',e:'🧙',t:'ライド',d:'城の中を飛び回る。並んでいる間の城内も見どころなので急がない方がいい。'},
+  'フライト・オブ・ザ・ヒッポグリフ':{s:'ヒッポグリフ',e:'🦅',t:'ファミリー',d:'1分ほどの短いコースター。城を見上げる画が撮れる。'},
+  'ハリウッド・ドリーム・ザ・ライド':{s:'ハリドリ',e:'🎧',t:'絶叫',d:'曲を選んで乗る。垂直に上がって落ちる、パークの象徴。'},
+  'ハリウッド・ドリーム 〜バックドロップ〜':{s:'ハリドリ逆',e:'🔙',t:'絶叫',d:'同じコースを後ろ向きで。落ちる先が見えないぶん別物になる。'},
+  'ザ・フライング・ダイナソー':{s:'フラダイ',e:'🦖',t:'絶叫',d:'うつ伏せでぶら下がったまま飛ぶ。国内最長・最大落差。覚悟して並ぶこと。'},
+  'ジュラシック・パーク・ザ・ライド':{s:'ジュラパ',e:'🚤',t:'ライド',d:'ボートで恐竜の谷へ。最後に25m落下する。前列は確実に濡れる。'},
+  'ジョーズ':{s:'ジョーズ',e:'🦈',t:'ライド',d:'ボートでサメに襲われる。乗り物より船長の演技を見るアトラクション。'},
+  'ミニオン・ハチャメチャ・ライド':{s:'ミニハチャ',e:'🍌',t:'ライド',d:'巨大ドームの映像で振り回される。酔いやすい人は前日の食事から注意。'},
+  'フリーズ・レイ・スライダー':{s:'フリーズレイ',e:'🧊',t:'ファミリー',d:'短い滑り台。子連れの合間の一本にちょうどいい。'},
+  'ヴィラン・コン ミニオン・ブラスト':{s:'ミニブラ',e:'🔫',t:'歩く',d:'歩きながら撃つシューティング。列の進みが早いので待ち時間の見た目ほど待たない。'},
+  'スペース・ファンタジー・ザ・ライド':{s:'スペファン',e:'🌟',t:'絶叫',d:'屋内で回転しながら進む。暗いので苦手な人は要注意。'},
+  'スペース・ファンタジー（CLUB ZEDD）':{s:'スペファンZ',e:'🎛',t:'絶叫',d:'期間限定の音楽版。中身は同じコース。'},
+  'スヌーピーのグレートレース':{s:'スヌーピー',e:'🐶',t:'ファミリー',d:'屋内のミニコースター。小さい子の最初の1本に。'},
+  'フライング・スヌーピー':{s:'フラスヌ',e:'✈️',t:'ファミリー',d:'ゆっくり回るだけ。待ち時間が短ければ休憩がわりに。'},
+  'ハローキティのカップケーキ・ドリーム':{s:'キティ',e:'🎀',t:'ファミリー',d:'ほぼ記念撮影用。回転はごく穏やか。'},
+  '呪術廻戦 ザ・リアル 4-D':{s:'呪術廻戦',e:'👁',t:'シアター',d:'座って見る4-D。期間限定なので今のうちに。'},
+  '名探偵コナン 4-Dライブ・ショー':{s:'コナン4-D',e:'🔍',t:'シアター',d:'生の俳優と映像を組み合わせたショー。回数が決まっている。'},
+  '名探偵コナン・ザ・ワールド':{s:'コナン',e:'🕵️',t:'歩く',d:'歩いて回る展示型。待ち時間の割に中は空いている。'},
+  'ウォーターワールド':{s:'WW',e:'💥',t:'ショー',d:'屋外スタントショー。前方の席は本当にずぶ濡れになる。'}
 };
 const info = n => INFO[n] || {e:'🎡', t:'', d:''};
+/* 地図には正式名称を出さない。全部載せると必ず潰し合うので、
+   通常は通称（3〜5文字）、拡大した時だけ正式名称に切り替える */
+const short = n => (INFO[n] && INFO[n].s) || n.replace(/[（(].*$/,'').slice(0,6);
 
 /* エリア（座標から手置き）。地図の"場所感"を出すためだけの背景 */
 const ZONES = [
@@ -680,8 +671,9 @@ async function load(){
     }
     render();
   }catch(e){
-    document.getElementById('clv').textContent = '取得に失敗しました';
+    document.getElementById('clv').textContent = '待ち時間を取得できません';
     document.getElementById('cst').textContent = '通信環境を確認して「更新」を押してください';
+    render();   /* 待ち時間が来なくても地図は出す */
   }
   b.dataset.busy = ''; b.textContent = '更新';
 }
@@ -749,6 +741,9 @@ function base(){
   return s;
 }
 
+/* 1.8倍以上に拡大したら正式名称、それまでは通称 */
+const label = n => Z.k >= 1.8 ? n : short(n);
+
 function map(){
   let s = base();
 
@@ -780,7 +775,7 @@ function map(){
   /* ピン自体も障害物。これが無いとラベルが数字の下に潜る */
   const boxes = pts.map(p => ({x1:p.x-17, x2:p.x+17, y1:p.y-17, y2:p.y+17}));
   const slot = p => {
-    const w = Math.min(p.name.length,8)*8.4;
+    const w = Math.min(label(p.name).length,10)*8.4;
     for(const dy of [29,-21,41,-33,53,-45,65,-57]){
       const b = {x1:p.x-w/2, x2:p.x+w/2, y1:p.y+dy-7, y2:p.y+dy+4};
       if(!boxes.some(o => b.x1<o.x2 && b.x2>o.x1 && b.y1<o.y2 && b.y2>o.y1)){
@@ -796,7 +791,7 @@ function map(){
        +   '<circle class="dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="15" fill="'+color(p.wait)+'"/>'
        +   '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'">'+p.wait+'</text>'
        +   (ly===null ? '' :
-           '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(p.name.slice(0,8))+'</text>')
+           '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(label(p.name))+'</text>')
        + '</g>';
   });
   /* 撮った写真をその場所のピンに刺す（ride-log と同じ考え方） */
@@ -830,8 +825,13 @@ function map(){
 
 /* ── ズーム／パン。viewBox ではなく g の transform を動かす ── */
 let Z = {k:1, x:0, y:0}, dragged = false;
-const applyZ = () => document.getElementById('vp')
-  .setAttribute('transform','translate('+Z.x+' '+Z.y+') scale('+Z.k+')');
+let lastMode = 0;
+const applyZ = () => {
+  document.getElementById('vp')
+    .setAttribute('transform','translate('+Z.x+' '+Z.y+') scale('+Z.k+')');
+  const m = Z.k >= 1.8 ? 1 : 0;
+  if(m !== lastMode){ lastMode = m; map(); }   /* 通称 ⇄ 正式名称 */
+};
 function zoomAt(cx, cy, mul){
   const k = Math.min(5, Math.max(1, Z.k*mul));
   const f = k/Z.k;
@@ -1213,17 +1213,15 @@ function logPane(){
 const VID = 'hcta0Wj5is8', CUE = 24;
 (function music(){
   const mini = document.getElementById('mini'), box = document.getElementById('sp-embed');
-  /* iframe を消すと再生も止まるので、畳む時は class だけ変えて残す */
-  const stop = () => { mini.hidden = true; mini.classList.remove('sm'); box.innerHTML = ''; };
-  document.getElementById('hn').onclick = () => {
-    if(!mini.hidden) return stop();
-    mini.hidden = false;
+  const hn = document.getElementById('hn');
+  const stop = () => { mini.hidden = true; hn.hidden = false; box.innerHTML = ''; };
+  hn.onclick = () => {
+    mini.hidden = false; hn.hidden = true;   /* 🍯 がプレーヤーに変わる */
     box.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + VID
       + '?start=' + CUE + '&autoplay=1&rel=0&playsinline=1" frameborder="0" title="くまのプーさん"'
       + ' allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
   };
   document.getElementById('mnx').onclick = stop;
-  document.getElementById('mnm').onclick = () => mini.classList.toggle('sm');
 })();
 
 /* ── 天気（Open-Meteo・キー不要・CORS可） ── */
