@@ -152,6 +152,15 @@ svg.map:active{cursor:grabbing}
   max-width:min(92vw,470px);background:var(--card);border:1px solid var(--sky);border-radius:14px;
   padding:13px 17px;font-size:12.5px;font-weight:800;line-height:1.75;
   box-shadow:0 14px 38px rgba(0,0,0,.5);animation:up .3s var(--ease-out) both}
+.pkpick{display:flex;gap:6px;margin-bottom:4px}
+.pk2{flex:1;border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:13px;
+  padding:11px 8px;font:inherit;cursor:pointer;text-align:center;
+  transition:transform .14s var(--ease-out),border-color .14s ease}
+.pk2:hover{transform:translateY(-2px);border-color:var(--sky)}
+.pk2 b{display:block;font-size:15px;font-weight:900}
+.pk2 span{display:block;font-size:9px;color:var(--sub);font-weight:800;margin-top:2px;line-height:1.4}
+.pk2.on{background:color-mix(in srgb,var(--accent) 22%,var(--bg2));border-color:var(--accent)}
+.pk2.on b{color:var(--sky)}
 .mbtn{border:1px solid var(--line);background:var(--bg2);color:var(--sub);border-radius:10px;
   width:34px;height:34px;font-size:15px;cursor:pointer;line-height:1;
   transition:transform .12s var(--spring),border-color .12s ease}
@@ -417,11 +426,11 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 </style>
 </head>
 <body>
-<script src="map.js"></script>
+<script>const PARKMAP = {};   /* map-<パークid>.js が入れる */</script>
 
 <header>
   <div class="wrap hbar">
-    <div class="logo"><b>パークログ</b><span class="dsp">USJ</span></div>
+    <div class="logo"><b>パークログ</b><span class="dsp" id="pknm">USJ</span></div>
     <button class="wx" id="wx" aria-label="天気予報"><span id="wxi">·</span><b id="wxt">--</b></button>
     <button class="honey" id="hn" aria-label="くまのプーさんを再生">🍯</button>
     <div class="hplay" id="mini" hidden>
@@ -493,7 +502,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 
 <div class="sheet" id="mns" hidden>
   <div class="sheet-in">
-    <h3>行った日</h3>
+    <h3>パーク</h3>
+    <div class="pkpick" id="pkp"></div>
+    <h2 class="sec">行った日</h2>
     <p>選ぶと、その日のルートと戦績を地図に出します</p>
     <div id="ds"></div>
     <h2 class="sec">設定</h2>
@@ -520,13 +531,25 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 </footer>
 
 <script>
-const PARK = '47f61fac-7586-41ac-ae80-61c9257cf33e';
-const API  = 'https://api.themeparks.wiki/v1/entity/' + PARK;
-const LS   = 'usjlog.v1';
+/* ── パーク定義。違うのはデータだけなので、ここを足せば園が増える ── */
+const PARKS = {
+  usj:{n:'ユニバーサル・スタジオ・ジャパン', s:'USJ',
+       api:'47f61fac-7586-41ac-ae80-61c9257cf33e', wx:[34.6655,135.4323],
+       gate:{la:34.66647, lo:135.43656}, lagoon:{la:34.66605, lo:135.43272, n:'ラグーン'}},
+  tdl:{n:'東京ディズニーランド', s:'TDL',
+       api:'3cc919f1-d16d-43e0-8c3f-1dd269bd1a42', wx:[35.6329,139.8804]},
+  tds:{n:'東京ディズニーシー', s:'TDS',
+       api:'67b290d5-3478-4f23-b601-2f8fb71ba803', wx:[35.6267,139.8850]}
+};
+let PK = localStorage.getItem('parklog.pk') || 'usj';
+const P  = () => PARKS[PK];
+const MP = () => PARKMAP[PK] || {};
+const API = () => 'https://api.themeparks.wiki/v1/entity/' + P().api;
+const LS  = () => 'parklog.' + PK;
 
 /* 主要アトラクションの和名。APIは英語しか返さないので手当て。
    ponytail: 未収録は英語のまま出す。増やしたい時はここに1行足すだけ */
-const JA = {
+const JA_USJ = {
   'Mine Cart Madness™':'ドンキーコングのクレイジー・トロッコ',
   'Mario Kart: Koopa’s Challenge™':'マリオカート 〜クッパの挑戦状〜',
   "Mario Kart: Koopa's Challenge™":'マリオカート 〜クッパの挑戦状〜',
@@ -555,11 +578,46 @@ const JA = {
   'JUJUTSU KAISEN: The Real 4-D — Clock Tower of Recurrence':'呪術廻戦 ザ・リアル 4-D',
   'WaterWorld':'ウォーターワールド'
 };
-const ja = n => JA[n] || n;
+PARKS.usj.ja = JA_USJ; PARKS.usj.info = INFO_USJ;
+PARKS.tdl.ja = {
+  'Splash Mountain':'スプラッシュ・マウンテン','Big Thunder Mountain':'ビッグサンダー・マウンテン',
+  'Star Tours: The Adventures Continue':'スター・ツアーズ','Haunted Mansion':'ホーンテッドマンション',
+  'Pirates of the Caribbean':'カリブの海賊','Jungle Cruise: Wildlife Expeditions':'ジャングルクルーズ',
+  '“it\'s a small world”':'イッツ・ア・スモールワールド','Pooh\'s Hunny Hunt':'プーさんのハニーハント',
+  'Monsters, Inc. Ride & Go Seek!':'モンスターズ・インク ライド&ゴーシーク!',
+  'The Happy Ride with Baymax':'ベイマックスのハッピーライド',
+  'Enchanted Tale of Beauty and the Beast':'美女と野獣 魔法のものがたり',
+  'Peter Pan\'s Flight':'ピーターパン空の旅','Dumbo The Flying Elephant':'空飛ぶダンボ',
+  'Castle Carrousel':'キャッスルカルーセル','Alice\'s Tea Party':'アリスのティーパーティー',
+  'Snow White\'s Adventures':'白雪姫と七人のこびと','Pinocchio\'s Daring Journey':'ピノキオの冒険旅行',
+  'Mickey\'s PhilharMagic':'ミッキーのフィルハーマジック','Western River Railroad':'ウエスタンリバー鉄道',
+  'Mark Twain Riverboat':'蒸気船マークトウェイン号','Country Bear Theater':'カントリーベア・シアター',
+  'Swiss Family Treehouse':'スイスファミリー・ツリーハウス','Roger Rabbit\'s Car Toon Spin':'ロジャーラビットのカートゥーンスピン',
+  'Gadget\'s Go Coaster':'ガジェットのゴーコースター','Stitch Encounter':'スティッチ・エンカウンター',
+  'Cinderella\'s Fairy Tale Hall':'シンデレラのフェアリーテイル・ホール'
+};
+PARKS.tds.ja = {
+  'Tower of Terror':'タワー・オブ・テラー','Journey to the Center of the Earth':'センター・オブ・ジ・アース',
+  '20,000 Leagues Under the Sea':'海底2万マイル','Raging Spirits':'レイジングスピリッツ',
+  'Indiana Jones Adventure®: Temple of the Crystal Skull':'インディ・ジョーンズ・アドベンチャー',
+  'Toy Story Mania!':'トイ・ストーリー・マニア!','Soaring: Fantastic Flight':'ソアリン ファンタスティック・フライト',
+  'Sindbad\'s Storybook Voyage':'シンドバッド・ストーリーブック・ヴォヤッジ',
+  'Nemo & Friends SeaRider':'ニモ&フレンズ・シーライダー','Venetian Gondolas':'ヴェネツィアン・ゴンドラ',
+  'Aquatopia':'アクアトピア','Anna and Elsa\'s Frozen Journey':'アナとエルサのフローズンジャーニー',
+  'Rapunzel\'s Lantern Festival':'ラプンツェルのランタンフェスティバル',
+  'Peter Pan\'s Never Land Adventure':'ピーターパンのネバーランドアドベンチャー',
+  'Jasmine\'s Flying Carpets':'ジャスミンのフライングカーペット','The Magic Lamp Theater':'マジックランプシアター',
+  'Flounder\'s Flying Fish Coaster':'フランダーのフライングフィッシュコースター',
+  'Scuttle\'s Scooters':'スカットルのスクーター','Jumpin\' Jellyfish':'ジャンピン・ジェリーフィッシュ',
+  'Blowfish Balloon Race':'ブローフィッシュ・バルーンレース','The Whirlpool':'ワールプール',
+  'Caravan Carousel':'キャラバンカルーセル','Turtle Talk':'タートル・トーク',
+  'Fortress Explorations':'フォートレス・エクスプロレーション','Big City Vehicles':'ビッグシティ・ヴィークル'
+};
+const ja = n => (P().ja || {})[n] || n;
 
 /* アトラクションの概要。公式の写真・文章は使えないので自分で書く。
    ponytail: 未収録は説明なしで出る。足したい時はここに1行 */
-const INFO = {
+const INFO_USJ = {
   'ドンキーコングのクレイジー・トロッコ':{s:'クレトロ',e:'🛒',t:'絶叫',d:'レールの切れ目をトロッコが飛び越える、世界初の仕掛け。見た目より揺れる。'},
   'マリオカート 〜クッパの挑戦状〜':{s:'マリカー',e:'🐢',t:'ライド',d:'ARゴーグルで甲羅を投げながら走る。並ぶ価値があるのは中の作り込み。'},
   'ヨッシー・アドベンチャー':{s:'ヨッシー',e:'🥚',t:'ファミリー',d:'屋外をゆっくり一周。エリア全体を見下ろせるので写真はここが一番。'},
@@ -583,13 +641,13 @@ const INFO = {
   '名探偵コナン・ザ・ワールド':{s:'コナン',e:'🕵️',t:'歩く',d:'歩いて回る展示型。待ち時間の割に中は空いている。'},
   'ウォーターワールド':{s:'WW',e:'💥',t:'ショー',d:'屋外スタントショー。前方の席は本当にずぶ濡れになる。'}
 };
-const info = n => INFO[n] || {e:'🎡', t:'', d:''};
+const info = n => (P().info || {})[n] || {e:'🎡', t:'', d:''};
 /* 地図には正式名称を出さない。全部載せると必ず潰し合うので、
    通常は通称（3〜5文字）、拡大した時だけ正式名称に切り替える */
-const short = n => (INFO[n] && INFO[n].s) || n.replace(/[（(].*$/,'').slice(0,6);
+const short = n => info(n).s || n.replace(/[（(].*$/,'').replace(/[:：].*$/,'').slice(0,7);
 
 /* エリア（座標から手置き）。地図の"場所感"を出すためだけの背景 */
-const ZONES = [
+PARKS.usj.zones = [
   {n:'スーパー・ニンテンドー・ワールド', la:34.66800, lo:135.43005, r:96, c:'#E2574C'},
   {n:'ウィザーディング・ワールド',       la:34.66866, lo:135.43185, r:62, c:'#6C5B9E'},
   {n:'ユニバーサル・ワンダーランド',     la:34.66750, lo:135.43345, r:98, c:'#EFA92C'},
@@ -598,32 +656,37 @@ const ZONES = [
   {n:'ジュラシック・パーク',             la:34.66445, lo:135.43062, r:74, c:'#3E7C50'},
   {n:'ミニオン・パーク',                 la:34.66345, lo:135.43245, r:68, c:'#E8C22F'}
 ];
-/* 中央のラグーン（実測でアトラクションが1つも無い空白＝実際の池の位置） */
-const LAGOON = {la:34.66605, lo:135.43272, rx:74, ry:56};
 
 const S = { data:[], showClosed:false, sort:'wait', hist:{days:{},names:{}}, log:[] };
 const today = () => new Date().toLocaleDateString('sv-SE');   // YYYY-MM-DD（現地時刻）
+function loadHist(){
 try{
-  S.hist = JSON.parse(localStorage.getItem(LS)) || {};
+  S.hist = JSON.parse(localStorage.getItem(LS())) || {};
   S.hist.days = S.hist.days || {};
   S.hist.names = S.hist.names || {};
   S.hist.waits = S.hist.waits || {};
   S.hist.cfg = S.hist.cfg || {};   /* 記録した時点の待ち時間。後から見返す時に正しい */
   /* v1（日付を持たない当日ぶんだけの配列）からの引き継ぎ */
+  if(PK === 'usj' && !localStorage.getItem(LS())){          /* 旧・USJ専用時代の記録を引き継ぐ */
+    const old = JSON.parse(localStorage.getItem('usjlog.v2') || 'null');
+    if(old && old.days) S.hist = old;
+  }
   const v1 = JSON.parse(localStorage.getItem('usjlog.v1') || 'null');
   if(Array.isArray(v1) && v1.length && !S.hist.days[today()]) S.hist.days[today()] = v1;
   localStorage.removeItem('usjlog.v1');
-}catch(e){ S.hist = {days:{},names:{}}; }
+}catch(e){ S.hist = {days:{},names:{},waits:{},cfg:{}}; }
 if(!S.hist.days[today()]) S.hist.days[today()] = [];
 S.log = S.hist.days[today()];        /* 参照を保持。中身だけ触ること */
 S.viewDay = today();                 /* 地図と戦績が見ている日 */
+}
+loadHist();
 S.media = [];
 S.plan = [];
 S.all = [];
 const poi = id => S.data.find(x=>x.id===id) || S.all.find(x=>x.id===id);
 /* 共有リンク（#p=xxxxxxxx.yyyyyyyy）。実IDへの解決はデータが来てから */
 const planSeed = (location.hash.match(/[#&]p=([\w.]+)/) || [,''])[1].split('.').filter(Boolean);
-const save = () => localStorage.setItem(LS, JSON.stringify(S.hist));
+const save = () => localStorage.setItem(LS(), JSON.stringify(S.hist));
 
 const dayIds  = d => S.hist.days[d] || [];
 const dayDone = () => dayIds(S.viewDay);
@@ -631,6 +694,7 @@ const dayDone = () => dayIds(S.viewDay);
 const rideOf = id => S.data.find(x=>x.id===id) || (S.hist.names[id] ? {id, name:S.hist.names[id]} : null);
 const waitOf = (d,id) => (S.hist.waits[d]||{})[id];
 const mediaOf = (d,id) => S.media.filter(m => m.day===d && m.ride===id);
+const myMedia = all => all.filter(m => (m.park||'usj') === PK);
 const fmtDay = d => d===today() ? '今日'
   : (+d.slice(5,7)) + '/' + (+d.slice(8,10));
 
@@ -659,14 +723,18 @@ const urlOf = m => {
 
 /* 緯度経度 → 画面座標。パークは約600m四方なのでメルカトル補正は不要、
    経度だけ cos(緯度) で潰せば実寸比になる */
-/* 公式アプリと同じ向き＝正面ゲート（東端）が真下に来るように、北ではなく
-   「東を下」にして描く。北は右、西が上になる */
-const LAc=34.6661, LOc=135.4332, KX=Math.cos(34.666*Math.PI/180), M=111000;
-const W=560, H=560, CX=280, CY=280, sc=(560-52)/760;
-const px = (la,lo) => CX + (la-LAc)*M*sc;        // 北 → 右
-const py = (la,lo) => CY + (lo-LOc)*KX*M*sc;     // 東 → 下
-const meters = (a,b) => Math.hypot((a.lo-b.lo)*KX, a.la-b.la) * M;
-const GATE = {la:34.66647, lo:135.43656};
+/* 投影はパークごとに map-<id>.js が持つ（正面ゲートが真下に来る回転角つき）。
+   東西方向は cos(緯度) で潰してメートル比にしてから回す */
+const M11 = 111000;
+function rotXY(la, lo){
+  const m = MP();
+  const E = (lo-m.loC) * Math.cos(m.laC*Math.PI/180) * M11, N = (la-m.laC) * M11;
+  return [E*m.cs + N*m.sn, E*m.sn - N*m.cs];
+}
+const px = (la,lo) => MP().CX + rotXY(la,lo)[0] * MP().sc;
+const py = (la,lo) => MP().CY + rotXY(la,lo)[1] * MP().sc;
+const meters = (a,b) => Math.hypot((a.lo-b.lo)*Math.cos(MP().laC*Math.PI/180), a.la-b.la) * M11;
+
 
 const color = w => w==null ? '#2B3A4C' : w<=20 ? '#3FBF6F' : w<=50 ? '#F5B942' : '#F0554E';
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -676,8 +744,8 @@ async function load(){
   b.dataset.busy = '1'; b.textContent = '更新中';
   try{
     const [kid, live] = await Promise.all([
-      fetch(API+'/children').then(r=>r.json()),
-      fetch(API+'/live').then(r=>r.json())
+      fetch(API()+'/children').then(r=>r.json()),
+      fetch(API()+'/live').then(r=>r.json())
     ]);
     const loc = {};
     kid.children.forEach(c => { if (c.location && c.location.latitude) loc[c.id] = c.location; });
@@ -714,7 +782,13 @@ async function load(){
   b.dataset.busy = ''; b.textContent = '更新';
 }
 
-function render(){ crowd(); dayStrip(); cfgPane(); map(); rows(); planPane(); logPane(); albumPane(); }
+function parkPane(){
+  document.getElementById('pkp').innerHTML = Object.keys(PARKS).map(k =>
+    '<button class="pk2'+(k===PK?' on':'')+'" data-p="'+k+'">'
+    + '<b>'+PARKS[k].s+'</b><span>'+PARKS[k].n+'</span></button>').join('');
+  document.querySelectorAll('.pk2').forEach(b => b.onclick = () => switchPark(b.dataset.p));
+}
+function render(){ parkPane(); crowd(); dayStrip(); cfgPane(); map(); rows(); planPane(); logPane(); albumPane(); }
 
 const SW = [
   {k:'fullNames', n:'地図に正式名称を出す', d:'既定は通称（ハリドリ等）。拡大すれば正式名称に切り替わります'},
@@ -740,7 +814,7 @@ function cfgPane(){
     a.download = 'parklog-usj-' + today() + '.json'; a.click();
   };
   document.getElementById('cf-del').onclick = async () => {
-    if(!confirm('記録も写真も全部消します。元に戻せません。よろしいですか？')) return;
+    if(!confirm(P().s+'の記録も写真も全部消します。元に戻せません。よろしいですか？')) return;
     for(const m of S.media) await mediaDel(m.k);
     S.media = []; S.hist = {days:{[today()]:[]}, names:{}, waits:{}, cfg:{}};
     S.log = S.hist.days[today()]; S.viewDay = today(); S.plan = [];
@@ -789,8 +863,9 @@ const poly = (a,cls,close) => {
   return '<path class="'+cls+'" d="'+d+(close?'Z':'')+'"/>';
 };
 function base(){
-  if(typeof OSM === 'undefined') return '<rect x="-400" y="-400" width="1400" height="1400" fill="#EDE3CE"/>';
-  let s = '<rect x="-400" y="-400" width="1400" height="1400" fill="#EAE0C9"/>';
+  const OSM = (MP().geo) || null;
+  let s = '<rect x="-800" y="-800" width="2600" height="2600" fill="#EAE0C9"/>';
+  if(!OSM) return s;
   s += OSM.g.map(a => poly(a,'m-green',1)).join('');
   s += OSM.w.map(a => poly(a,'m-water',1)).join('');
   s += OSM.s.map(a => poly(a,'m-svc',0)).join('');
@@ -798,11 +873,14 @@ function base(){
   s += OSM.b.map(a => poly(a,'m-bldg',1)).join('');
   s += OSM.l.map(a => poly(a,'m-wall',0)).join('');
   /* エリア名。実際のパークマップと同じく、地面ではなく文字で場所を示す */
-  s += '<text class="lagoon-l" x="'+px(LAGOON.la,LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la,LAGOON.lo).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
-  /* 正面ゲート。向きの基準になるので必ず出す */
-  const gx = px(GATE.la,GATE.lo), gy = py(GATE.la,GATE.lo);
-  s += '<g class="gate"><circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r="9"/>'
-    +  '<text x="'+gx.toFixed(1)+'" y="'+(gy+22).toFixed(1)+'" text-anchor="middle">正面ゲート</text></g>';
+  const lg = P().lagoon;
+  if(lg) s += '<text class="lagoon-l" x="'+px(lg.la,lg.lo).toFixed(1)+'" y="'+py(lg.la,lg.lo).toFixed(1)+'" text-anchor="middle">'+lg.n+'</text>';
+  const gt = P().gate;
+  if(gt){
+    const gx = px(gt.la,gt.lo), gy = py(gt.la,gt.lo);
+    s += '<g class="gate"><circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r="9"/>'
+      +  '<text x="'+gx.toFixed(1)+'" y="'+(gy+22).toFixed(1)+'" text-anchor="middle">正面ゲート</text></g>';
+  }
   return s;
 }
 
@@ -851,7 +929,7 @@ function map(){
   /* エリア名。中心から少しずつ探して、空きが無ければ出さない（潰し合うより出さない方が読める） */
   const ZC = [[0,0],[0,-26],[0,26],[-34,0],[34,0],[0,-50],[0,50],[-58,-26],[58,-26],[-58,26],[58,26],[0,-74],[0,74]];
   let zs = '';
-  ZONES.forEach(z=>{
+  (P().zones||[]).forEach(z=>{
     const pos = fit(px(z.la,z.lo), py(z.la,z.lo), z.n.length*11.9, 16, ZC);
     if(pos) zs += '<text class="zone-l" x="'+pos[0].toFixed(1)+'" y="'+pos[1].toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
@@ -923,12 +1001,12 @@ function zoomAt(cx, cy, mul){
 /* 引ききった時に地図が枠から離れないよう戻す */
 function clampZ(){
   const lim = (Z.k-1);
-  Z.x = Math.min(0, Math.max(-560*lim, Z.x));
-  Z.y = Math.min(0, Math.max(-560*lim, Z.y));
+  Z.x = Math.min(0, Math.max(-MP().W*lim, Z.x));
+  Z.y = Math.min(0, Math.max(-MP().H*lim, Z.y));
 }
 function svgPt(e){
   const r = document.getElementById('map').getBoundingClientRect();
-  return [(e.clientX-r.left)/r.width*560, (e.clientY-r.top)/r.height*560];
+  return [(e.clientX-r.left)/r.width*MP().W, (e.clientY-r.top)/r.height*MP().H];
 }
 (function bindZoom(){
   const m = document.getElementById('map');
@@ -966,8 +1044,8 @@ function svgPt(e){
   m.addEventListener('pointerup', up);
   m.addEventListener('pointercancel', up);
 
-  document.getElementById('zi').onclick = () => zoomAt(280, 280, 1.5);
-  document.getElementById('zo').onclick = () => zoomAt(280, 280, 1/1.5);
+  document.getElementById('zi').onclick = () => zoomAt(MP().W/2, MP().H/2, 1.5);
+  document.getElementById('zo').onclick = () => zoomAt(MP().W/2, MP().H/2, 1/1.5);
   document.getElementById('zr').onclick = () => { Z = {k:1,x:0,y:0}; applyZ(); };
 })();
 
@@ -1116,15 +1194,15 @@ document.getElementById('pick').onchange = async function(){
     }
     if(!bulk){ const a = poi(pickFor); name = a ? a.name : ''; }
     await mediaPut({
-      k: (ride||'_') + '_' + f.name + '_' + f.size + '_' + f.lastModified,
-      day, ride: ride || '', name,
+      k: PK + '_' + (ride||'_') + '_' + f.name + '_' + f.size + '_' + f.lastModified,
+      park: PK, day, ride: ride || '', name,
       kind: f.type.startsWith('video') ? 'video' : 'image',
       la: ex ? ex.la : undefined, lo: ex ? ex.lo : undefined,
       blob: f
     });
   }
   this.value = ''; pickFor = null;
-  S.media = await mediaAll();
+  S.media = myMedia(await mediaAll());
   render();
   if(bulk) toast(total + '枚を取り込みました。うち ' + placed + '枚を撮った場所の施設に自動で振り分けました。'
     + (placed < total ? '（残りは位置情報が無いか、施設から70m以上離れた場所です）' : ''));
@@ -1153,7 +1231,7 @@ function openViewer(list, i){
     box.querySelector('.vw-del').onclick = async e => {
       e.stopPropagation();
       if(!confirm('この1件を削除します。よろしいですか？')) return;
-      await mediaDel(m.k); S.media = await mediaAll(); vw.hidden = true; render();
+      await mediaDel(m.k); S.media = myMedia(await mediaAll()); vw.hidden = true; render();
     };
   };
   draw(i); vw.hidden = false;
@@ -1432,7 +1510,7 @@ const WXI = {0:'☀️',1:'🌤',2:'⛅️',3:'☁️',45:'🌫',48:'🌫',51:'�
   80:'🌦',81:'🌧',82:'🌧',85:'🌨',86:'🌨',95:'⛈',96:'⛈',99:'⛈'};
 async function weather(){
   try{
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6655&longitude=135.4323'
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude='+P().wx[0]+'&longitude='+P().wx[1]
       + '&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability'
       + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
       + '&forecast_days=7&timezone=Asia%2FTokyo').then(r=>r.json());
@@ -1491,8 +1569,34 @@ document.getElementById('cl').onclick = function(){
   rows();
 };
 
-mediaAll().then(m => { S.media = m; render(); }).catch(()=>{});
-load();
+function loadMapFile(pk){
+  if(PARKMAP[pk]) return Promise.resolve();
+  return new Promise((ok,ng)=>{
+    const t = document.createElement('script');
+    t.src = 'map-' + pk + '.js'; t.onload = ok; t.onerror = ng;
+    document.head.appendChild(t);
+  });
+}
+async function switchPark(pk){
+  if(pk === PK) return;
+  PK = pk; localStorage.setItem('parklog.pk', pk);
+  await loadMapFile(pk).catch(()=>{});
+  document.getElementById('pknm').textContent = P().s;
+  document.getElementById('map').setAttribute('viewBox', '0 0 '+MP().W+' '+MP().H);
+  Z = {k:1,x:0,y:0}; applyZ();
+  loadHist(); S.plan = []; S.data = []; S.all = [];
+  S.media = myMedia(await mediaAll());
+  document.getElementById('mns').hidden = true;
+  render(); weather(); load();
+}
+(async function boot(){
+  document.getElementById('pknm').textContent = P().s;
+  await loadMapFile(PK).catch(()=>{});
+  document.getElementById('map').setAttribute('viewBox', '0 0 '+MP().W+' '+MP().H);
+  S.media = myMedia(await mediaAll().catch(()=>[]));
+  render();
+  load();
+})();
 setInterval(() => { if(!S.hist.cfg.noAuto) load(); }, 60000);   // 1分ごとに自動更新
 </script>
 </body>
