@@ -100,9 +100,17 @@ svg.map:active{cursor:grabbing}
 }
 .zc button:hover{transform:translateY(-1px);background:#fff}
 .zc button:active{transform:scale(.93)}
-.zone-l{font-size:10px;font-weight:800;fill:#5A4C36;letter-spacing:.02em;paint-order:stroke;
+/* 実地図の描画 */
+.m-green{fill:#B7D2A2;stroke:none}
+.m-water{fill:#9CCDE4;stroke:#7FB6D2;stroke-width:.8}
+.m-path{fill:none;stroke:#FCF7EC;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.m-svc{fill:none;stroke:#E0D5BC;stroke-width:2.6;stroke-linecap:round}
+.m-bldg{fill:#D8CAAD;stroke:#BCA986;stroke-width:.7;stroke-linejoin:round}
+.m-wall{fill:none;stroke:#C0AE8B;stroke-width:1.1}
+.zone-l{font-size:10px;font-weight:800;fill:#4E4230;letter-spacing:.02em;paint-order:stroke;
+  stroke:rgba(255,251,242,.9);stroke-width:3.5px}
+.lagoon-l{font-size:10px;font-weight:800;fill:#2F6E8C;letter-spacing:.06em;paint-order:stroke;
   stroke:rgba(255,251,242,.75);stroke-width:3px}
-.lagoon-l{font-size:10px;font-weight:800;fill:#3F7F9C;letter-spacing:.06em}
 .pin{cursor:pointer}
 .pin circle{transition:r .14s var(--ease-out)}
 .pin:hover circle.dot{r:19}
@@ -218,6 +226,29 @@ svg.map:active{cursor:grabbing}
 .wxh b{display:block;font-size:19px;margin:3px 0;line-height:1.1}
 .wxh em{display:block;font-style:normal;font-size:13px;font-weight:900}
 .wxh i{display:block;font-style:normal;font-size:10px;color:var(--sky);font-weight:800;margin-top:2px}
+.wxk{font-size:10px;color:var(--sub);font-weight:800;letter-spacing:.1em;margin:16px 0 8px}
+.wxk:first-of-type{margin-top:2px}
+.wxd{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+  background:var(--bg2);border-radius:12px;margin-bottom:6px}
+.wxd[data-t]{border-color:var(--accent)}
+.wxd>span{width:62px;flex:none;font-size:12px;font-weight:900}
+.wxd>span em{font-style:normal;font-size:10px;color:var(--sub);margin-left:4px}
+.wxd>b{font-size:18px;line-height:1;width:24px;text-align:center}
+.wxd>u{flex:1;text-decoration:none;font-size:14px;font-weight:900}
+.wxd>u i{font-style:normal;font-size:11.5px;color:var(--sub);margin-left:6px}
+.wxd>s{text-decoration:none;font-size:11.5px;font-weight:800;color:var(--sub);white-space:nowrap}
+.wxd>s.hi{color:var(--sky)}
+
+/* カテゴリの折りたたみ */
+.cat{border:1px solid var(--line);background:var(--card);border-radius:13px;margin-bottom:7px;overflow:hidden}
+.cat summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:9px;
+  font-size:13px;font-weight:800}
+.cat summary::-webkit-details-marker{display:none}
+.cat summary i{font-style:normal;font-size:15px}
+.cat summary b{color:var(--sub);font-size:11px;font-weight:800}
+.cat summary em{margin-left:auto;font-style:normal;font-size:10.5px;color:var(--sky);font-weight:800}
+.cat[open] summary{border-bottom:1px solid var(--line)}
+.cat .pick2{padding:12px 13px}
 
 /* 拡大ビューア */
 .viewer[hidden]{display:none}
@@ -349,6 +380,7 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 </style>
 </head>
 <body>
+<script src="map.js"></script>
 
 <header>
   <div class="wrap hbar">
@@ -416,9 +448,12 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 
 <div class="sheet" id="wxs" hidden>
   <div class="sheet-in">
-    <h3>今日のUSJの天気</h3>
-    <p>ユニバーサル・シティ周辺・1時間ごと</p>
+    <h3>USJの天気</h3>
+    <p>ユニバーサル・シティ周辺</p>
+    <div class="wxk">今日・1時間ごと</div>
     <div class="wxrow" id="wxb"></div>
+    <div class="wxk">この先7日間</div>
+    <div id="wxw"></div>
     <button class="danger" id="wxx" style="width:100%;margin-top:14px">閉じる</button>
   </div>
 </div>
@@ -535,6 +570,8 @@ S.log = S.hist.days[today()];        /* 参照を保持。中身だけ触るこ�
 S.viewDay = today();                 /* 地図と戦績が見ている日 */
 S.media = [];
 S.plan = [];
+S.all = [];
+const poi = id => S.data.find(x=>x.id===id) || S.all.find(x=>x.id===id);
 /* 共有リンク（#p=xxxxxxxx.yyyyyyyy）。実IDへの解決はデータが来てから */
 const planSeed = (location.hash.match(/[#&]p=([\w.]+)/) || [,''])[1].split('.').filter(Boolean);
 const save = () => localStorage.setItem(LS, JSON.stringify(S.hist));
@@ -596,6 +633,13 @@ async function load(){
     const loc = {};
     kid.children.forEach(c => { if (c.location && c.location.latitude) loc[c.id] = c.location; });
 
+    /* 施設ぜんぶ（プランに食事やショーも入れられるように） */
+    const KIND = {ATTRACTION:'ride', RESTAURANT:'eat', SHOW:'show'};
+    S.all = kid.children.filter(c => loc[c.id] && KIND[c.entityType]).map(c => ({
+      id:c.id, name:ja(c.name), kind:KIND[c.entityType],
+      la:loc[c.id].latitude, lo:loc[c.id].longitude
+    }));
+
     const seen = {};
     S.data = live.liveData
       .filter(x => x.entityType === 'ATTRACTION' && loc[x.id])
@@ -655,35 +699,27 @@ function declutter(p, gap){
   }
 }
 
-/* パークマップ風の下地。公式マップは著作物なので使わず、実測座標から自前で描く */
+/* 下地は OpenStreetMap の実形状（map.js）。塗りの重なりでは地図に見えないので、
+   実際の建物の輪郭・通路・水面をそのまま描く */
+const poly = (a,cls,close) => {
+  let d = 'M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1);
+  for(let i=2;i<a.length;i+=2) d += 'L' + a[i].toFixed(1) + ' ' + a[i+1].toFixed(1);
+  return '<path class="'+cls+'" d="'+d+(close?'Z':'')+'"/>';
+};
 function base(){
-  let s = '<rect x="-400" y="-400" width="1400" height="1400" fill="#EDE3CE"/>';
-  /* 園内をぐるりと回る本通り（実際のUSJもラグーンを囲む環状） */
-  const ring = [3,2,1,0,4,5,6].map(i => px(ZONES[i].lo).toFixed(1)+','+py(ZONES[i].la).toFixed(1)).join(' ');
-  s += '<polygon points="'+ring+'" fill="#E4F0DA" stroke="#FBF5E7" stroke-width="30" stroke-linejoin="round"/>';
-  /* エリア。円を重ねて有機的な塊にする（g にまとめないと重なりが濃くなる） */
-  ZONES.forEach(z=>{
-    const X=px(z.lo), Y=py(z.la);
-    s += '<g fill="'+z.c+'" opacity=".30">'
-      +  [[0,0,1],[.46,-.28,.70],[-.42,.34,.64],[.3,.42,.58]].map(([dx,dy,k]) =>
-           '<circle cx="'+(X+dx*z.r).toFixed(1)+'" cy="'+(Y+dy*z.r).toFixed(1)+'" r="'+(z.r*k).toFixed(1)+'"/>').join('')
-      +  '</g>';
-  });
-  /* 中央のラグーン */
-  const LX=px(LAGOON.lo), LY=py(LAGOON.la);
-  s += '<ellipse cx="'+LX.toFixed(1)+'" cy="'+LY.toFixed(1)+'" rx="'+LAGOON.rx+'" ry="'+LAGOON.ry+'" fill="#9FCFE4"/>'
-    +  '<ellipse cx="'+LX.toFixed(1)+'" cy="'+(LY-6).toFixed(1)+'" rx="'+(LAGOON.rx-13)+'" ry="'+(LAGOON.ry-13)+'" fill="#B4DCEC" opacity=".8"/>'
-    +  '<text class="lagoon-l" x="'+LX.toFixed(1)+'" y="'+(LY+4).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
-  /* 植栽。のっぺり防止 */
-  [[34.6672,135.4312],[34.6650,135.4310],[34.6638,135.4335],[34.6683,135.4325],
-   [34.6663,135.4344],[34.6655,135.4300],[34.6690,135.4297],[34.6647,135.4340]].forEach(([la,lo],i)=>{
-    const X=px(lo), Y=py(la), r=13+(i%3)*4;
-    s += '<g fill="#8FB870" opacity=".55"><circle cx="'+X+'" cy="'+Y+'" r="'+r+'"/>'
-      +  '<circle cx="'+(X+r*.7)+'" cy="'+(Y+r*.4)+'" r="'+(r*.72)+'"/></g>';
-  });
+  if(typeof OSM === 'undefined') return '<rect x="-400" y="-400" width="1400" height="1400" fill="#EDE3CE"/>';
+  let s = '<rect x="-400" y="-400" width="1400" height="1400" fill="#EAE0C9"/>';
+  s += OSM.g.map(a => poly(a,'m-green',1)).join('');
+  s += OSM.w.map(a => poly(a,'m-water',1)).join('');
+  s += OSM.s.map(a => poly(a,'m-svc',0)).join('');
+  s += OSM.p.map(a => poly(a,'m-path',0)).join('');   /* 歩ける通路。地図らしさの主役 */
+  s += OSM.b.map(a => poly(a,'m-bldg',1)).join('');
+  s += OSM.l.map(a => poly(a,'m-wall',0)).join('');
+  /* エリア名。実際のパークマップと同じく、地面ではなく文字で場所を示す */
   ZONES.forEach(z=>{
     s += '<text class="zone-l" x="'+px(z.lo).toFixed(1)+'" y="'+(py(z.la)-z.r+13).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
+  s += '<text class="lagoon-l" x="'+px(LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
   return s;
 }
 
@@ -695,7 +731,11 @@ function map(){
   declutter(pts, 39);
 
   /* 計画したルート（これから行く順）*/
-  const plan = S.plan.map(id => pts.find(p=>p.id===id)).filter(Boolean);
+  /* レストランやショーは待ち時間ピンが無いので、その時は実座標をそのまま使う */
+  const plan = S.plan.map(id => {
+    const p = pts.find(p=>p.id===id); if(p) return p;
+    const a = poi(id); return a && a.la!=null ? {id, x:px(a.lo), y:py(a.la)} : null;
+  }).filter(Boolean);
   if(plan.length>1){
     s += '<polyline class="proute" points="'+plan.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
   }
@@ -985,7 +1025,7 @@ const planUrl = () => location.origin + location.pathname
 
 function planPane(){
   const el = document.getElementById('p-plan');
-  const items = S.plan.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+  const items = S.plan.map(poi).filter(Boolean);
   let html = '<p class="lead">乗りたい順に選ぶと、地図にその順路が出ます。'
     + 'できたリンクを送れば、相手の画面にも同じ順路が出ます。</p>';
 
@@ -998,7 +1038,8 @@ function planPane(){
       +   '<div class="st"><div class="k">WALK</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km</em></div></div></div>'
       + '<ol class="plan">' + items.map((x,i)=>
           '<li><b class="dsp num">'+(i+1)+'</b><span>'+esc(x.name)
-          + '<small class="num">'+(x.wait!=null?x.wait+'分待ち':'休止中')+'</small></span>'
+          + '<small class="num">'+(x.wait!=null ? x.wait+'分待ち'
+              : x.kind==='eat' ? 'レストラン' : x.kind==='show' ? 'ショー' : '待ち時間なし')+'</small></span>'
           + '<button class="mv" data-i="'+i+'" data-d="-1" aria-label="上へ">↑</button>'
           + '<button class="mv" data-i="'+i+'" data-d="1" aria-label="下へ">↓</button>'
           + '<button class="mv rm" data-x="'+x.id+'" aria-label="外す">×</button></li>').join('')
@@ -1009,11 +1050,25 @@ function planPane(){
     html += '<div class="empty">まだ何も入っていません。<br>下のリストの <b>🗺</b> か、地図のピンから追加できます。</div>';
   }
 
-  html += '<h2 class="sec">アトラクションから選ぶ</h2><div class="pick2">'
-    + S.data.filter(x=>x.open).map(x =>
-        '<button class="pk'+(S.plan.includes(x.id)?' on':'')+'" data-p="'+x.id+'">'
-        + '<i>'+info(x.name).e+'</i>'+esc(x.name)+'</button>').join('')
-    + '</div>';
+  /* 一覧をそのまま並べると長すぎるのでカテゴリで畳む */
+  const CATS = [
+    {k:'ride', n:'アトラクション', e:'🎢'},
+    {k:'show', n:'ショー',        e:'🎭'},
+    {k:'eat',  n:'レストラン',     e:'🍔'}
+  ];
+  html += '<h2 class="sec">行き先を足す</h2>'
+    + CATS.map(c=>{
+      const list = S.all.filter(x=>x.kind===c.k)
+        .sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+      if(!list.length) return '';
+      const n = list.filter(x=>S.plan.includes(x.id)).length;
+      return '<details class="cat"><summary><i>'+c.e+'</i>'+c.n
+        + '<b class="num">'+list.length+'</b>'
+        + (n ? '<em class="num">'+n+'件 選択中</em>' : '') + '</summary><div class="pick2">'
+        + list.map(x => '<button class="pk'+(S.plan.includes(x.id)?' on':'')+'" data-p="'+x.id+'">'
+            + (c.k==='ride' ? '<i>'+info(x.name).e+'</i>' : '')+esc(x.name)+'</button>').join('')
+        + '</div></details>';
+    }).join('');
 
   el.innerHTML = html;
   el.querySelectorAll('.mv').forEach(b => b.onclick = () =>
@@ -1151,7 +1206,8 @@ async function weather(){
   try{
     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6655&longitude=135.4323'
       + '&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability'
-      + '&forecast_days=1&timezone=Asia%2FTokyo').then(r=>r.json());
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+      + '&forecast_days=7&timezone=Asia%2FTokyo').then(r=>r.json());
     document.getElementById('wxi').textContent = WXI[r.current.weather_code] || '·';
     document.getElementById('wxt').textContent = Math.round(r.current.temperature_2m) + '°';
     const h = r.hourly, now = new Date().getHours();
@@ -1161,6 +1217,16 @@ async function weather(){
       '<div class="wxh"><span>'+hh+'時</span><b>'+(WXI[h.weather_code[i]]||'·')+'</b>'
       + '<em class="num">'+Math.round(h.temperature_2m[i])+'°</em>'
       + '<i class="num">'+h.precipitation_probability[i]+'%</i></div>').join('');
+
+    const D = r.daily, WD = ['日','月','火','水','木','金','土'];
+    document.getElementById('wxw').innerHTML = D.time.map((t,i)=>{
+      const dt = new Date(t+'T00:00:00+09:00'), pop = D.precipitation_probability_max[i];
+      return '<div class="wxd"'+(i===0?' data-t="1"':'')+'>'
+        + '<span>'+(i===0?'今日':(+t.slice(5,7))+'/'+(+t.slice(8,10)))+'<em>'+WD[dt.getDay()]+'</em></span>'
+        + '<b>'+(WXI[D.weather_code[i]]||'·')+'</b>'
+        + '<u class="num">'+Math.round(D.temperature_2m_max[i])+'°<i>'+Math.round(D.temperature_2m_min[i])+'°</i></u>'
+        + '<s class="num'+(pop>=50?' hi':'')+'">☂ '+pop+'%</s></div>';
+    }).join('');
   }catch(e){
     document.getElementById('wxb').innerHTML = '<p class="note-s">天気を取得できませんでした</p>';
   }
