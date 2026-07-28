@@ -135,15 +135,32 @@ svg.map:active{cursor:grabbing}
 .pth{cursor:zoom-in}
 
 /* 日別ストリップ */
-.daystrip[hidden]{display:none}
-.daystrip{display:flex;gap:6px;overflow-x:auto;padding:9px 4px 0;scrollbar-width:none}
-.daystrip::-webkit-scrollbar{display:none}
-.day{
-  flex:none;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
-  border-radius:999px;padding:5px 12px;font:inherit;font-size:11.5px;font-weight:900;
-  cursor:pointer;white-space:nowrap;transition:all .14s ease}
-.day span{font-weight:800;opacity:.75;margin-left:6px;font-size:10px}
-.day.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sw{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink);border-radius:13px;
+  padding:11px 14px;margin-bottom:7px;cursor:pointer;transition:border-color .14s ease}
+.sw:hover{border-color:var(--sky)}
+.sw span{flex:1;min-width:0}
+.sw b{display:block;font-size:13px;font-weight:800}
+.sw em{display:block;font-style:normal;font-size:10.5px;color:var(--sub);font-weight:700;line-height:1.6}
+.sw i{flex:none;width:38px;height:22px;border-radius:999px;background:var(--line);position:relative;
+  transition:background .16s ease}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:var(--sub);transition:transform .16s var(--ease-out),background .16s ease}
+.sw.on i{background:color-mix(in srgb,var(--accent) 60%,var(--bg2))}
+.sw.on i::after{transform:translateX(16px);background:#fff}
+.mbtn{border:1px solid var(--line);background:var(--bg2);color:var(--sub);border-radius:10px;
+  width:34px;height:34px;font-size:15px;cursor:pointer;line-height:1;
+  transition:transform .12s var(--spring),border-color .12s ease}
+.mbtn:hover{transform:translateY(-1px);border-color:var(--sky);color:var(--sky)}
+.day{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  border:1px solid var(--line);background:var(--bg2);color:var(--ink);
+  border-radius:13px;padding:11px 14px;margin-bottom:7px;font:inherit;cursor:pointer;
+  transition:transform .14s var(--ease-out),border-color .14s ease}
+.day:hover{transform:translateY(-2px);border-color:var(--sky)}
+.day b{font-size:13.5px;font-weight:900;min-width:44px}
+.day span{flex:1;font-size:11px;color:var(--sub);font-weight:800}
+.day i{font-style:normal;font-size:10px;font-weight:900;color:var(--accent)}
+.day.on{border-color:var(--accent)}
 
 /* 記録に写真を足す */
 .tl-h{display:flex;align-items:center;gap:8px}
@@ -410,6 +427,7 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
       <button id="mnx" aria-label="止める">✕</button>
     </div>
     <button class="rf" id="rf">更新</button>
+    <button class="mbtn" id="mb" aria-label="メニュー">☰</button>
   </div>
 </header>
 
@@ -433,7 +451,6 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
         <button id="zr" aria-label="全体表示">⤢</button>
       </div>
     </div>
-    <div class="daystrip" id="ds"></div>
     <div class="legend">
       <span><i style="background:#3FBF6F"></i>〜20分</span>
       <span><i style="background:#F5B942"></i>〜50分</span>
@@ -469,6 +486,16 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 <input type="file" id="pick" accept="image/*,video/*" multiple hidden>
 <div class="viewer" id="vw" hidden><div class="vw-in" id="vwin"></div></div>
 <div class="sheet" id="det" hidden><div class="sheet-in" id="detin"></div></div>
+
+<div class="sheet" id="mns" hidden>
+  <div class="sheet-in">
+    <h3>行った日</h3>
+    <p>選ぶと、その日のルートと戦績を地図に出します</p>
+    <div id="ds"></div>
+    <h2 class="sec">設定</h2>
+    <div id="cfg"></div>
+  </div>
+</div>
 
 <div class="sheet" id="wxs" hidden>
   <div class="sheet-in">
@@ -576,7 +603,8 @@ try{
   S.hist = JSON.parse(localStorage.getItem(LS)) || {};
   S.hist.days = S.hist.days || {};
   S.hist.names = S.hist.names || {};
-  S.hist.waits = S.hist.waits || {};   /* 記録した時点の待ち時間。後から見返す時に正しい */
+  S.hist.waits = S.hist.waits || {};
+  S.hist.cfg = S.hist.cfg || {};   /* 記録した時点の待ち時間。後から見返す時に正しい */
   /* v1（日付を持たない当日ぶんだけの配列）からの引き継ぎ */
   const v1 = JSON.parse(localStorage.getItem('usjlog.v1') || 'null');
   if(Array.isArray(v1) && v1.length && !S.hist.days[today()]) S.hist.days[today()] = v1;
@@ -682,7 +710,39 @@ async function load(){
   b.dataset.busy = ''; b.textContent = '更新';
 }
 
-function render(){ crowd(); dayStrip(); map(); rows(); planPane(); logPane(); albumPane(); }
+function render(){ crowd(); dayStrip(); cfgPane(); map(); rows(); planPane(); logPane(); albumPane(); }
+
+const SW = [
+  {k:'fullNames', n:'地図に正式名称を出す', d:'既定は通称（ハリドリ等）。拡大すれば正式名称に切り替わります'},
+  {k:'noAuto',    n:'自動更新を止める',     d:'既定は1分ごとに待ち時間を取り直します'}
+];
+function cfgPane(){
+  const el = document.getElementById('cfg');
+  el.innerHTML = SW.map(o =>
+      '<button class="sw'+(S.hist.cfg[o.k]?' on':'')+'" data-k="'+o.k+'">'
+      + '<span><b>'+o.n+'</b><em>'+o.d+'</em></span><i></i></button>').join('')
+    + '<div class="acts">'
+    +   '<button class="act" id="cf-exp">記録を書き出す</button>'
+    +   '<button class="act" id="cf-del">全部消す</button>'
+    + '</div>'
+    + '<p class="note-s">写真は '+S.media.length+' 枚。記録も写真もこの端末の中だけに保存されています。</p>';
+
+  el.querySelectorAll('.sw').forEach(b => b.onclick = () => {
+    S.hist.cfg[b.dataset.k] = !S.hist.cfg[b.dataset.k]; save(); render();
+  });
+  document.getElementById('cf-exp').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(S.hist,null,1)],{type:'application/json'}));
+    a.download = 'parklog-usj-' + today() + '.json'; a.click();
+  };
+  document.getElementById('cf-del').onclick = async () => {
+    if(!confirm('記録も写真も全部消します。元に戻せません。よろしいですか？')) return;
+    for(const m of S.media) await mediaDel(m.k);
+    S.media = []; S.hist = {days:{[today()]:[]}, names:{}, waits:{}, cfg:{}};
+    S.log = S.hist.days[today()]; S.viewDay = today(); S.plan = [];
+    save(); render();
+  };
+}
 
 function crowd(){
   const ws = S.data.filter(x=>x.open && x.wait!=null).map(x=>x.wait);
@@ -743,7 +803,7 @@ function base(){
 }
 
 /* 1.8倍以上に拡大したら正式名称、それまでは通称 */
-const label = n => Z.k >= 1.8 ? n : short(n);
+const label = n => (S.hist.cfg.fullNames || Z.k >= 1.8) ? n : short(n);
 
 function map(){
   let s = base();
@@ -948,17 +1008,18 @@ function toggle(id){
 function dayStrip(){
   const days = Object.keys(S.hist.days).filter(d => S.hist.days[d].length).sort().reverse();
   const el = document.getElementById('ds');
-  /* 切り替える先が無い時は出さない（1個だけ置いても場所を食うだけ） */
-  if(days.length < 2){ el.innerHTML = ''; el.hidden = true; return; }
-  el.hidden = false;
-  if(!days.includes(today())) days.unshift(today());
+  if(!days.length){
+    el.innerHTML = '<div class="empty">まだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ここに来園日が並びます。</div>';
+    return;
+  }
   el.innerHTML = days.map(d=>{
     const n = dayIds(d).length, ph = S.media.filter(m=>m.day===d).length;
     return '<button class="day'+(d===S.viewDay?' on':'')+'" data-d="'+d+'">'
-      + fmtDay(d)+'<span>'+n+'台'+(ph?'・📷'+ph:'')+'</span></button>';
+      + '<b>'+fmtDay(d)+'</b><span>'+n+'アトラクション'+(ph?'・写真'+ph+'枚':'')+'</span>'
+      + (d===S.viewDay?'<i>表示中</i>':'') + '</button>';
   }).join('');
-  document.querySelectorAll('.day').forEach(b => b.onclick = () => {
-    S.viewDay = b.dataset.d; render();
+  el.querySelectorAll('.day').forEach(b => b.onclick = () => {
+    S.viewDay = b.dataset.d; document.getElementById('mns').hidden = true; render();
   });
 }
 
@@ -1304,6 +1365,11 @@ async function weather(){
     document.getElementById('wxb').innerHTML = '<p class="note-s">天気を取得できませんでした</p>';
   }
 }
+(function menuUI(){
+  const m = document.getElementById('mns');
+  document.getElementById('mb').onclick = () => m.hidden = false;
+  m.onclick = e => { if(e.target === m) m.hidden = true; };
+})();
 (function wxUI(){
   const s = document.getElementById('wxs');
   document.getElementById('wx').onclick = () => s.hidden = false;
@@ -1333,7 +1399,7 @@ document.getElementById('cl').onclick = function(){
 
 mediaAll().then(m => { S.media = m; render(); }).catch(()=>{});
 load();
-setInterval(load, 60000);   // 1分ごとに自動更新
+setInterval(() => { if(!S.hist.cfg.noAuto) load(); }, 60000);   // 1分ごとに自動更新
 </script>
 </body>
 </html>
