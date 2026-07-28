@@ -208,8 +208,23 @@ svg.map:active{cursor:grabbing}
 .desc{font-size:13px;line-height:1.85}
 .desc.dim{color:var(--sub);font-size:12px}
 .note-s{font-size:10.5px;color:var(--sub);line-height:1.75;margin:10px 0;font-weight:700}
-#sp-embed:not(:empty){border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#000}
+/* ミニプレーヤー（常駐・アプリ操作を塞がない） */
+.mini[hidden]{display:none}
+.mini{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:55;
+  width:214px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 14px 38px rgba(0,0,0,.5);overflow:hidden;
+  animation:up .3s var(--ease-out) both}
+.mini-h{display:flex;align-items:center;gap:6px;padding:7px 8px 7px 11px}
+.mini-h b{flex:1;min-width:0;font-size:11.5px;font-weight:900;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.mini-h button{border:0;background:transparent;color:var(--sub);font:inherit;font-size:13px;
+  width:22px;height:22px;border-radius:7px;cursor:pointer;line-height:1}
+.mini-h button:hover{background:var(--bg2);color:var(--ink)}
+#sp-embed{aspect-ratio:16/9;background:#000}
 #sp-embed iframe{display:block;width:100%;height:100%;border:0}
+.mini.sm{width:150px}
+.mini.sm #sp-embed{height:2px;aspect-ratio:auto;overflow:hidden}   /* 音は残したまま畳む */
+@media(max-width:420px){.mini{width:172px}}
 
 /* 天気 */
 .wx{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg2);
@@ -458,14 +473,13 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
   </div>
 </div>
 
-<div class="sheet" id="sh" hidden>
-  <div class="sheet-in">
-    <h3>くまのプーさん</h3>
-    <p>歌い出し（0:24）から再生します</p>
-    <div id="sp-embed"></div>
-    <p class="note-s">音が出ない時は、プレーヤーの ▶ をもう一度どうぞ（端末側の自動再生制限）。</p>
-    <button class="danger" id="shx" style="width:100%;margin-top:10px">閉じる</button>
+<div class="mini" id="mini" hidden>
+  <div class="mini-h">
+    <b>くまのプーさん</b>
+    <button id="mnm" aria-label="小さくする">–</button>
+    <button id="mnx" aria-label="止める">✕</button>
   </div>
+  <div id="sp-embed"></div>
 </div>
 
 <footer>
@@ -1186,16 +1200,18 @@ function logPane(){
    iframe はボタンを押した瞬間に差し込む＝ユーザー操作扱いになり自動再生が通りやすい */
 const VID = 'hcta0Wj5is8', CUE = 24;
 (function music(){
-  const sh = document.getElementById('sh'), box = document.getElementById('sp-embed');
-  const close = () => { sh.hidden = true; box.innerHTML = ''; };   /* 閉じたら止める */
+  const mini = document.getElementById('mini'), box = document.getElementById('sp-embed');
+  /* iframe を消すと再生も止まるので、畳む時は class だけ変えて残す */
+  const stop = () => { mini.hidden = true; mini.classList.remove('sm'); box.innerHTML = ''; };
   document.getElementById('hn').onclick = () => {
-    sh.hidden = false;
+    if(!mini.hidden) return stop();
+    mini.hidden = false;
     box.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + VID
       + '?start=' + CUE + '&autoplay=1&rel=0&playsinline=1" frameborder="0" title="くまのプーさん"'
       + ' allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
   };
-  document.getElementById('shx').onclick = close;
-  sh.onclick = e => { if(e.target === sh) close(); };
+  document.getElementById('mnx').onclick = stop;
+  document.getElementById('mnm').onclick = () => mini.classList.toggle('sm');
 })();
 
 /* ── 天気（Open-Meteo・キー不要・CORS可） ── */
