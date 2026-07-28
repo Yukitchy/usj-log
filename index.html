@@ -107,6 +107,13 @@ svg.map:active{cursor:grabbing}
 .m-svc{fill:none;stroke:#E0D5BC;stroke-width:2.6;stroke-linecap:round}
 .m-bldg{fill:#D8CAAD;stroke:#BCA986;stroke-width:.7;stroke-linejoin:round}
 .m-wall{fill:none;stroke:#C0AE8B;stroke-width:1.1}
+.gate circle{fill:#E2574C;stroke:#fff;stroke-width:2.5}
+.gate text{font-size:10px;font-weight:900;fill:#B33A31;paint-order:stroke;
+  stroke:rgba(255,251,242,.92);stroke-width:3.5px}
+.compass{position:absolute;left:11px;top:11px;display:flex;align-items:center;gap:3px;
+  background:rgba(255,252,246,.9);border:1px solid rgba(43,33,24,.14);border-radius:9px;
+  padding:3px 8px;font-size:11px;font-weight:900;color:#5A4C36;pointer-events:none}
+.compass span{font-size:10px;letter-spacing:.06em}
 .zone-l{font-size:10px;font-weight:800;fill:#4E4230;letter-spacing:.02em;paint-order:stroke;
   stroke:rgba(255,251,242,.9);stroke-width:3.5px}
 .lagoon-l{font-size:10px;font-weight:800;fill:#2F6E8C;letter-spacing:.06em;paint-order:stroke;
@@ -418,7 +425,8 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 
   <div class="mapcard">
     <div class="mapbox">
-      <svg class="map" id="map" viewBox="0 0 560 600" role="img" aria-label="USJ 待ち時間マップ"><g id="vp"></g></svg>
+      <svg class="map" id="map" viewBox="0 0 560 560" role="img" aria-label="USJ 待ち時間マップ"><g id="vp"></g></svg>
+      <div class="compass" aria-hidden="true"><span>N</span>→</div>
       <div class="zc">
         <button id="zi" aria-label="拡大">＋</button>
         <button id="zo" aria-label="縮小">−</button>
@@ -624,14 +632,14 @@ const urlOf = m => {
 
 /* 緯度経度 → 画面座標。パークは約600m四方なのでメルカトル補正は不要、
    経度だけ cos(緯度) で潰せば実寸比になる */
-const LA0=34.66280, LA1=34.66940, LO0=135.42940, LO1=135.43680;
-const KX = Math.cos(34.666*Math.PI/180);
-const W=560, H=600, PAD=34;
-const spanX=(LO1-LO0)*KX, spanY=(LA1-LA0);
-const sc = Math.min((W-PAD*2)/spanX, (H-PAD*2)/spanY);
-const px = lo => PAD + (lo-LO0)*KX*sc + ((W-PAD*2)-spanX*sc)/2;
-const py = la => PAD + (LA1-la)*sc     + ((H-PAD*2)-spanY*sc)/2;
-const meters = (a,b) => Math.hypot((a.lo-b.lo)*KX, a.la-b.la) * 111000;
+/* 公式アプリと同じ向き＝正面ゲート（東端）が真下に来るように、北ではなく
+   「東を下」にして描く。北は右、西が上になる */
+const LAc=34.6661, LOc=135.4332, KX=Math.cos(34.666*Math.PI/180), M=111000;
+const W=560, H=560, CX=280, CY=280, sc=(560-52)/760;
+const px = (la,lo) => CX + (la-LAc)*M*sc;        // 北 → 右
+const py = (la,lo) => CY + (lo-LOc)*KX*M*sc;     // 東 → 下
+const meters = (a,b) => Math.hypot((a.lo-b.lo)*KX, a.la-b.la) * M;
+const GATE = {la:34.66647, lo:135.43656};
 
 const color = w => w==null ? '#2B3A4C' : w<=20 ? '#3FBF6F' : w<=50 ? '#F5B942' : '#F0554E';
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -731,9 +739,13 @@ function base(){
   s += OSM.l.map(a => poly(a,'m-wall',0)).join('');
   /* エリア名。実際のパークマップと同じく、地面ではなく文字で場所を示す */
   ZONES.forEach(z=>{
-    s += '<text class="zone-l" x="'+px(z.lo).toFixed(1)+'" y="'+(py(z.la)-z.r+13).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
+    s += '<text class="zone-l" x="'+px(z.la,z.lo).toFixed(1)+'" y="'+(py(z.la,z.lo)-z.r+13).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
-  s += '<text class="lagoon-l" x="'+px(LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
+  s += '<text class="lagoon-l" x="'+px(LAGOON.la,LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la,LAGOON.lo).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
+  /* 正面ゲート。向きの基準になるので必ず出す */
+  const gx = px(GATE.la,GATE.lo), gy = py(GATE.la,GATE.lo);
+  s += '<g class="gate"><circle cx="'+gx.toFixed(1)+'" cy="'+gy.toFixed(1)+'" r="9"/>'
+    +  '<text x="'+gx.toFixed(1)+'" y="'+(gy+22).toFixed(1)+'" text-anchor="middle">正面ゲート</text></g>';
   return s;
 }
 
@@ -741,14 +753,14 @@ function map(){
   let s = base();
 
   const pts = S.data.filter(x=>x.open && x.wait!=null)
-                    .map(x => ({...x, x:px(x.lo), y:py(x.la)}));
+                    .map(x => ({...x, x:px(x.la,x.lo), y:py(x.la,x.lo)}));
   declutter(pts, 39);
 
   /* 計画したルート（これから行く順）*/
   /* レストランやショーは待ち時間ピンが無いので、その時は実座標をそのまま使う */
   const plan = S.plan.map(id => {
     const p = pts.find(p=>p.id===id); if(p) return p;
-    const a = poi(id); return a && a.la!=null ? {id, x:px(a.lo), y:py(a.la)} : null;
+    const a = poi(id); return a && a.la!=null ? {id, x:px(a.la,a.lo), y:py(a.la,a.lo)} : null;
   }).filter(Boolean);
   if(plan.length>1){
     s += '<polyline class="proute" points="'+plan.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
@@ -830,11 +842,11 @@ function zoomAt(cx, cy, mul){
 function clampZ(){
   const lim = (Z.k-1);
   Z.x = Math.min(0, Math.max(-560*lim, Z.x));
-  Z.y = Math.min(0, Math.max(-600*lim, Z.y));
+  Z.y = Math.min(0, Math.max(-560*lim, Z.y));
 }
 function svgPt(e){
   const r = document.getElementById('map').getBoundingClientRect();
-  return [(e.clientX-r.left)/r.width*560, (e.clientY-r.top)/r.height*600];
+  return [(e.clientX-r.left)/r.width*560, (e.clientY-r.top)/r.height*560];
 }
 (function bindZoom(){
   const m = document.getElementById('map');
@@ -872,8 +884,8 @@ function svgPt(e){
   m.addEventListener('pointerup', up);
   m.addEventListener('pointercancel', up);
 
-  document.getElementById('zi').onclick = () => zoomAt(280, 300, 1.5);
-  document.getElementById('zo').onclick = () => zoomAt(280, 300, 1/1.5);
+  document.getElementById('zi').onclick = () => zoomAt(280, 280, 1.5);
+  document.getElementById('zo').onclick = () => zoomAt(280, 280, 1/1.5);
   document.getElementById('zr').onclick = () => { Z = {k:1,x:0,y:0}; applyZ(); };
 })();
 
