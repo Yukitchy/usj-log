@@ -114,8 +114,8 @@ svg.map:active{cursor:grabbing}
   background:rgba(255,252,246,.9);border:1px solid rgba(43,33,24,.14);border-radius:9px;
   padding:3px 8px;font-size:11px;font-weight:900;color:#5A4C36;pointer-events:none}
 .compass span{font-size:10px;letter-spacing:.06em}
-.zone-l{font-size:10px;font-weight:800;fill:#4E4230;letter-spacing:.02em;paint-order:stroke;
-  stroke:rgba(255,251,242,.9);stroke-width:3.5px}
+.zone-l{font-size:11px;font-weight:900;fill:#8A7A5E;letter-spacing:.08em;paint-order:stroke;
+  stroke:rgba(250,244,232,.75);stroke-width:4px}
 .lagoon-l{font-size:10px;font-weight:800;fill:#2F6E8C;letter-spacing:.06em;paint-order:stroke;
   stroke:rgba(255,251,242,.75);stroke-width:3px}
 .pin{cursor:pointer}
@@ -730,8 +730,9 @@ function base(){
   s += OSM.b.map(a => poly(a,'m-bldg',1)).join('');
   s += OSM.l.map(a => poly(a,'m-wall',0)).join('');
   /* エリア名。実際のパークマップと同じく、地面ではなく文字で場所を示す */
+  /* エリア名は実際のパークマップと同じく、地面に大きく薄く敷く（ピンの下） */
   ZONES.forEach(z=>{
-    s += '<text class="zone-l" x="'+px(z.la,z.lo).toFixed(1)+'" y="'+(py(z.la,z.lo)-z.r+13).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
+    s += '<text class="zone-l" x="'+px(z.la,z.lo).toFixed(1)+'" y="'+py(z.la,z.lo).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
   s += '<text class="lagoon-l" x="'+px(LAGOON.la,LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la,LAGOON.lo).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
   /* 正面ゲート。向きの基準になるので必ず出す */
@@ -772,8 +773,12 @@ function map(){
   }
   /* ピンを離しても文字幅までは吸収できないので、
      ラベルは上下4段の候補から先に置いた箱と当たらない位置を選ぶ */
-  /* ピン自体も障害物。これが無いとラベルが数字の下に潜る */
+  /* ピンとエリア名は障害物。これが無いとラベルが数字やエリア名の下に潜る */
   const boxes = pts.map(p => ({x1:p.x-17, x2:p.x+17, y1:p.y-17, y2:p.y+17}));
+  ZONES.forEach(z=>{
+    const x=px(z.la,z.lo), y=py(z.la,z.lo), w=z.n.length*6.2;
+    boxes.push({x1:x-w/2, y1:y-9, x2:x+w/2, y2:y+5});
+  });
   const slot = p => {
     const w = Math.min(label(p.name).length,10)*8.4;
     for(const dy of [29,-21,41,-33,53,-45,65,-57]){
