@@ -952,6 +952,21 @@ const meters = (a,b) => Math.hypot((a.lo-b.lo)*Math.cos(MP().laC*Math.PI/180), a
 const color = w => w==null ? '#2B3A4C' : w<=20 ? '#3FBF6F' : w<=50 ? '#F5B942' : '#F0554E';
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+/* Macの定点観測が貯めた実測（3パーク共通）。自分の来園記録より圧倒的に数が多い */
+async function loadObs(){
+  try{
+    const r = await fetch('history.json?h=' + new Date().toISOString().slice(0,13));
+    if(r.ok) S.obs = await r.json();
+  }catch(e){ /* まだ1件も貯まっていない時はファイルが無い。無視してよい */ }
+}
+function observed(iso){
+  const o = ((S.obs||{})[PK]||{})[iso];
+  if(o && o.avg != null) return o.avg;
+  const mine = (S.hist.avg||{})[iso];
+  return mine == null ? null : mine;
+}
+function obsDays(){ return Object.keys((S.obs||{})[PK] || {}).length; }
+
 async function load(){
   const b = document.getElementById('rf');
   b.dataset.busy = '1'; b.textContent = '更新中';
@@ -1838,10 +1853,12 @@ function forecast(iso){
   let k = 1;
   const hol = holidayJP(y,m,d);
   if(hol){ k *= 1.25; why.push(hol); }
-  if(wd===6){ k *= 1.30; why.push('土曜'); }
-  else if(wd===0){ k *= 1.20; why.push('日曜'); }
-  else if(wd===5){ k *= 0.95; why.push('金曜'); }
-  else { k *= 0.80; why.push('平日'); }
+  const WN = ['日曜','月曜','火曜','水曜','木曜','金曜','土曜'];
+  if(S.wdfit && S.wdfit[wd] != null){ k *= S.wdfit[wd]; why.push(WN[wd] + '(実測)'); }
+  else{
+    k *= wd===6 ? 1.30 : wd===0 ? 1.20 : wd===5 ? 0.95 : 0.80;
+    why.push(wd===6||wd===0||wd===5 ? WN[wd] : '平日');
+  }
   const se = season(m,d);
   if(se){ k *= se.k; why.push(se.n); }
   /* 公式の営業時間。基準より長い日は park 側が混雑を見込んでいる */
@@ -1859,14 +1876,26 @@ function forecast(iso){
 }
 /* 実測が溜まったら倍率を補正する */
 function calibrate(){
-  const a = S.hist.avg || {}, ks = Object.keys(a);
+  const a = {};
+  Object.entries(((S.obs||{})[PK]) || {}).forEach(function(e){ if(e[1] && e[1].avg!=null) a[e[0]]=e[1].avg; });
+  Object.entries(S.hist.avg || {}).forEach(function(e){ if(a[e[0]]==null) a[e[0]]=e[1]; });
+  const ks = Object.keys(a);
+  S.wdfit = null;
   if(ks.length < 3){ S.hist.calfit = 1; return; }
-  const r = ks.map(d => {
-    const save = S.hist.calfit; S.hist.calfit = 1;
-    const f = forecast(d).v; S.hist.calfit = save;
-    return f ? a[d]/f : 1;
-  }).sort((x,y)=>x-y);
-  S.hist.calfit = Math.max(0.6, Math.min(1.6, r[Math.floor(r.length/2)]));   /* 中央値。外れ値に強い */
+  const med = arr => { const t=arr.slice().sort((x,y)=>x-y); return t[Math.floor(t.length/2)]; };
+  const ratio = d => { const sv=S.hist.calfit, wf=S.wdfit;
+    S.hist.calfit=1; S.wdfit=null; const f=forecast(d).v;
+    S.hist.calfit=sv; S.wdfit=wf; return f ? a[d]/f : 1; };
+  S.hist.calfit = Math.max(0.6, Math.min(1.6, med(ks.map(ratio))));   /* 中央値。外れ値に強い */
+  if(ks.length >= 14){                       /* 2週間たまったら曜日の癖も実測から */
+    const by = {};
+    ks.forEach(d => { const w = new Date(d+'T00:00:00').getDay();
+      (by[w] = by[w] || []).push(ratio(d) / S.hist.calfit); });
+    const fit = {};
+    Object.entries(by).forEach(function(e){
+      if(e[1].length >= 3) fit[e[0]] = Math.max(0.6, Math.min(1.7, med(e[1]))); });
+    if(Object.keys(fit).length) S.wdfit = fit;
+  }
 }
 
 let calM = null;      /* 表示中の月（Dateの1日） */
@@ -1883,7 +1912,7 @@ function calRender(){
     .map((w,i)=>'<div class="cw'+(i===0?' s':i===6?' t':'')+'">'+w+'</div>').join('');
   for(let i=0;i<first;i++) h += '<div class="cd void"></div>';
   for(let d=1; d<=last; d++){
-    const k = iso(d), f = forecast(k), real = (S.hist.avg||{})[k];
+    const k = iso(d), f = forecast(k), real = observed(k);
     const v = real != null ? real : f.v, lv = lvOf(v);
     const wd = new Date(y,m,d).getDay();
     h += '<button class="cd'+(f.hol||wd===0?' hol':wd===6?' sat':'')
@@ -1899,7 +1928,7 @@ function calRender(){
   calDetail(calM.getMonth()===t.getMonth() && calM.getFullYear()===t.getFullYear() ? today() : iso(1));
 }
 function calDetail(k){
-  const f = forecast(k), real = (S.hist.avg||{})[k];
+  const f = forecast(k), real = observed(k);
   const v = real != null ? real : f.v, lv = lvOf(v);
   const [y,m,d] = k.split('-').map(Number);
   const wd = ['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
@@ -1909,8 +1938,12 @@ function calDetail(k){
     + f.why.join(' / ')
     + (f.sc ? '　営業 ' + f.sc.o + '–' + f.sc.c : '')
     + (real==null && S.hist.calfit && Math.abs(S.hist.calfit-1)>0.02
-        ? '<br>実測' + Object.keys(S.hist.avg||{}).length + '日分で補正済み（×'
-          + (Math.round(S.hist.calfit*100)/100) + '）' : '');
+        ? '<br>実測で補正済み（×' + (Math.round(S.hist.calfit*100)/100) + '）'
+          + (S.wdfit ? '・曜日の癖も実測から' : '') : '');
+  const n = obsDays();
+  document.getElementById('calp').textContent = n
+    ? '毎日5回の定点観測が' + n + '日分たまっています。実測が増えるほど予想が当たります'
+    : '土日祝・長期休暇・公式の営業時間から、その日の平均待ち時間を見積もります';
 }
 
 /* ── UI配線 ── */
@@ -1955,6 +1988,7 @@ async function switchPark(pk){
   document.getElementById('map').setAttribute('viewBox', '0 0 '+MP().W+' '+MP().H);
   Z = {k:1,x:0,y:0}; applyZ();
   loadHist(); S.plan = []; S.data = []; S.all = [];
+  await loadObs();
   S.media = myMedia(await mediaAll());
   document.getElementById('mns').hidden = true;
   render(); weather(); load();
@@ -1965,6 +1999,7 @@ async function switchPark(pk){
   document.getElementById('map').setAttribute('viewBox', '0 0 '+MP().W+' '+MP().H);
   S.media = myMedia(await mediaAll().catch(()=>[]));
   render();
+  await loadObs();
   load();
 })();
 setInterval(() => { if(!S.hist.cfg.noAuto) load(); }, 60000);   // 1分ごとに自動更新
