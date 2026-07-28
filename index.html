@@ -159,6 +159,22 @@ svg.map{display:block;width:100%;height:auto;border-radius:14px;background:#0B11
   background:var(--gold);box-shadow:0 0 0 3px var(--bg)}
 .tl li small{color:var(--sub);font-size:10.5px;margin-left:6px;font-weight:800}
 .empty{text-align:center;color:var(--sub);font-size:13px;padding:34px 20px;line-height:1.9}
+.sec{font-size:13px;font-weight:900;margin:26px 0 10px;padding-top:20px;border-top:1px solid var(--line);letter-spacing:.04em}
+.rate{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 17px}
+.rate-h{display:flex;align-items:baseline;justify-content:space-between}
+.rate-h b{font-size:13px;font-weight:800}
+.rate-h span{font-size:38px;color:var(--sky);line-height:1}
+.rate-h i{font-style:normal;font-size:15px;margin-left:2px}
+.bar{height:9px;background:var(--bg);border-radius:999px;overflow:hidden;margin:11px 0 9px}
+.bar span{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent),var(--sky));
+  animation:grow .8s var(--ease-out) both}
+@keyframes grow{from{transform:scaleX(0);transform-origin:0 50%}to{transform:scaleX(1)}}
+.rate-f{font-size:11px;color:var(--sub);font-weight:800}
+.yet{margin-top:12px}
+.yet b{font-size:11.5px;color:var(--sub);font-weight:800;letter-spacing:.03em}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{border:1px dashed var(--line);color:var(--sub);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:700}
 .danger{background:transparent;border:1px solid var(--line);color:var(--sub);border-radius:999px;
   padding:7px 16px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;display:block;margin:16px auto 0}
 .danger:hover{border-color:var(--bad);color:var(--bad)}
@@ -270,9 +286,20 @@ const ZONES = [
   {n:'MINION PARK',          la:34.66345, lo:135.43245, r:68}
 ];
 
-const S = { data:[], showClosed:false, sort:'wait', log:[] };
-try { S.log = JSON.parse(localStorage.getItem(LS)) || []; } catch(e){ S.log = []; }
-const save = () => localStorage.setItem(LS, JSON.stringify(S.log));
+const S = { data:[], showClosed:false, sort:'wait', hist:{days:{},names:{}}, log:[] };
+const today = () => new Date().toLocaleDateString('sv-SE');   // YYYY-MM-DD（現地時刻）
+try{
+  S.hist = JSON.parse(localStorage.getItem(LS)) || {};
+  S.hist.days = S.hist.days || {};
+  S.hist.names = S.hist.names || {};
+  /* v1（日付を持たない当日ぶんだけの配列）からの引き継ぎ */
+  const v1 = JSON.parse(localStorage.getItem('usjlog.v1') || 'null');
+  if(Array.isArray(v1) && v1.length && !S.hist.days[today()]) S.hist.days[today()] = v1;
+  localStorage.removeItem('usjlog.v1');
+}catch(e){ S.hist = {days:{},names:{}}; }
+if(!S.hist.days[today()]) S.hist.days[today()] = [];
+S.log = S.hist.days[today()];        /* 参照を保持。中身だけ触ること */
+const save = () => localStorage.setItem(LS, JSON.stringify(S.hist));
 
 /* 緯度経度 → 画面座標。パークは約600m四方なのでメルカトル補正は不要、
    経度だけ cos(緯度) で潰せば実寸比になる */
@@ -422,34 +449,67 @@ function rows(){
 
 function toggle(id){
   const i = S.log.indexOf(id);
-  if(i>=0) S.log.splice(i,1); else S.log.push(id);
+  if(i>=0) S.log.splice(i,1);
+  else{
+    S.log.push(id);
+    const a = S.data.find(x=>x.id===id);
+    if(a) S.hist.names[id] = a.name;   /* APIから消えた後も通算に名前を残す */
+  }
   save(); render();
 }
 
 function logPane(){
   const el = document.getElementById('p-log');
   const items = S.log.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+
+  /* ── 今日 ── */
+  let html;
   if(!items.length){
-    el.innerHTML = '<div class="empty">まだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ルートと戦績がここに残ります。</div>';
-    return;
+    html = '<div class="empty">今日はまだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ルートと戦績がここに残ります。</div>';
+  }else{
+    const wait = items.reduce((a,b)=>a+(b.wait||0),0);
+    let dist = 0;
+    for(let i=1;i<items.length;i++) dist += meters(items[i-1], items[i]);
+    /* ponytail: 移動距離は記録順の直線距離の合計。実際の順路より短く出る。
+       GPSを入れるならここを置き換える */
+    html =
+      '<div class="stats">'
+      + '<div class="st hero"><div class="k">TODAY</div><div class="v dsp num">'+items.length+'<em>アトラクション制覇</em></div></div>'
+      + '<div class="st"><div class="k">TOTAL WAIT</div><div class="v dsp num">'+wait+'<em>分 並んだ</em></div></div>'
+      + '<div class="st"><div class="k">DISTANCE</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km 歩いた</em></div></div>'
+      + '</div>'
+      + '<ol class="tl">' + items.map(x =>
+          '<li>'+esc(x.name)+'<small class="num">'+(x.wait!=null?x.wait+'分待ち':'—')+'</small></li>').join('')
+      + '</ol>'
+      + '<button class="danger" id="cr">今日の記録をリセット</button>';
   }
-  const wait = items.reduce((a,b)=>a+(b.wait||0),0);
-  let dist = 0;
-  for(let i=1;i<items.length;i++) dist += meters(items[i-1], items[i]);
-  /* ponytail: 移動距離は記録順の直線距離の合計。実際の順路より短く出る。
-     GPSを入れるならここを置き換える */
-  el.innerHTML =
-    '<div class="stats">'
-    + '<div class="st hero"><div class="k">CONQUERED</div><div class="v dsp num">'+items.length+'<em>アトラクション制覇</em></div></div>'
-    + '<div class="st"><div class="k">TOTAL WAIT</div><div class="v dsp num">'+wait+'<em>分 並んだ</em></div></div>'
-    + '<div class="st"><div class="k">DISTANCE</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km 歩いた</em></div></div>'
-    + '</div>'
-    + '<ol class="tl">' + items.map(x =>
-        '<li>'+esc(x.name)+'<small class="num">'+(x.wait!=null?x.wait+'分待ち':'—')+'</small></li>').join('')
-    + '</ol>'
-    + '<button class="danger" id="cr">今日の記録をリセット</button>';
-  document.getElementById('cr').onclick = () => {
-    if(confirm('今日の記録を全部消します。よろしいですか？')){ S.log=[]; save(); render(); }
+
+  /* ── 通算（公式に無いところ。ここが積み上がるほど戻ってくる理由になる） ── */
+  const ever = new Set(Object.values(S.hist.days).flat());
+  const rides = Object.values(S.hist.days).reduce((a,b)=>a+b.length,0);
+  const visits = Object.values(S.hist.days).filter(d=>d.length).length;
+  if(S.data.length && ever.size){
+    const total = S.data.length;
+    const pct = Math.round(ever.size/total*100);
+    const yet = S.data.filter(x=>!ever.has(x.id));
+    html += '<h2 class="sec">通算記録</h2>'
+      + '<div class="rate">'
+      +   '<div class="rate-h"><b>制覇率</b><span class="dsp num">'+pct+'<i>%</i></span></div>'
+      +   '<div class="bar"><span style="width:'+pct+'%"></span></div>'
+      +   '<div class="rate-f num">'+ever.size+' / '+total+' アトラクション　・　通算 '+rides+' 回　・　'+visits+' 日来園</div>'
+      + '</div>';
+    if(yet.length){
+      html += '<div class="yet"><b>まだ乗っていない '+yet.length+' 件</b><div class="tags">'
+        + yet.map(x=>'<span class="tag">'+esc(x.name)+'</span>').join('') + '</div></div>';
+    }else{
+      html += '<div class="yet"><b>全アトラクション制覇。もう乗るものがありません。</b></div>';
+    }
+  }
+
+  el.innerHTML = html;
+  const cr = document.getElementById('cr');
+  if(cr) cr.onclick = () => {
+    if(confirm('今日の記録を全部消します。通算記録は残ります。')){ S.log.length = 0; save(); render(); }
   };
 }
 
