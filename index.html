@@ -730,10 +730,6 @@ function base(){
   s += OSM.b.map(a => poly(a,'m-bldg',1)).join('');
   s += OSM.l.map(a => poly(a,'m-wall',0)).join('');
   /* エリア名。実際のパークマップと同じく、地面ではなく文字で場所を示す */
-  /* エリア名は実際のパークマップと同じく、地面に大きく薄く敷く（ピンの下） */
-  ZONES.forEach(z=>{
-    s += '<text class="zone-l" x="'+px(z.la,z.lo).toFixed(1)+'" y="'+py(z.la,z.lo).toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
-  });
   s += '<text class="lagoon-l" x="'+px(LAGOON.la,LAGOON.lo).toFixed(1)+'" y="'+py(LAGOON.la,LAGOON.lo).toFixed(1)+'" text-anchor="middle">ラグーン</text>';
   /* 正面ゲート。向きの基準になるので必ず出す */
   const gx = px(GATE.la,GATE.lo), gy = py(GATE.la,GATE.lo);
@@ -773,12 +769,25 @@ function map(){
   }
   /* ピンを離しても文字幅までは吸収できないので、
      ラベルは上下4段の候補から先に置いた箱と当たらない位置を選ぶ */
-  /* ピンとエリア名は障害物。これが無いとラベルが数字やエリア名の下に潜る */
+  /* ピンが最優先の障害物。ラベル類はその隙間に置く */
   const boxes = pts.map(p => ({x1:p.x-17, x2:p.x+17, y1:p.y-17, y2:p.y+17}));
+  const fit = (x, y, w, h, cands) => {
+    for(const [dx,dy] of cands){
+      const b = {x1:x+dx-w/2, x2:x+dx+w/2, y1:y+dy-h/2, y2:y+dy+h/2};
+      if(!boxes.some(o => b.x1<o.x2 && b.x2>o.x1 && b.y1<o.y2 && b.y2>o.y1)){
+        boxes.push(b); return [x+dx, y+dy];
+      }
+    }
+    return null;
+  };
+  /* エリア名。中心から少しずつ探して、空きが無ければ出さない（潰し合うより出さない方が読める） */
+  const ZC = [[0,0],[0,-26],[0,26],[-34,0],[34,0],[0,-50],[0,50],[-58,-26],[58,-26],[-58,26],[58,26],[0,-74],[0,74]];
+  let zs = '';
   ZONES.forEach(z=>{
-    const x=px(z.la,z.lo), y=py(z.la,z.lo), w=z.n.length*6.2;
-    boxes.push({x1:x-w/2, y1:y-9, x2:x+w/2, y2:y+5});
+    const pos = fit(px(z.la,z.lo), py(z.la,z.lo), z.n.length*6.4, 15, ZC);
+    if(pos) zs += '<text class="zone-l" x="'+pos[0].toFixed(1)+'" y="'+pos[1].toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
+  s += zs;
   const slot = p => {
     const w = Math.min(label(p.name).length,10)*8.4;
     for(const dy of [29,-21,41,-33,53,-45,65,-57]){
