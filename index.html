@@ -135,14 +135,14 @@ svg.map:active{cursor:grabbing}
 .pth{cursor:zoom-in}
 
 /* 日別ストリップ */
-.daystrip{display:flex;gap:7px;overflow-x:auto;padding:11px 4px 3px;scrollbar-width:none}
+.daystrip[hidden]{display:none}
+.daystrip{display:flex;gap:6px;overflow-x:auto;padding:9px 4px 0;scrollbar-width:none}
 .daystrip::-webkit-scrollbar{display:none}
 .day{
   flex:none;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
-  border-radius:12px;padding:6px 13px;font:inherit;cursor:pointer;text-align:left;
-  transition:all .14s ease}
-.day b{display:block;font-size:12.5px;font-weight:900;line-height:1.35}
-.day span{font-size:9.5px;font-weight:800;opacity:.85}
+  border-radius:999px;padding:5px 12px;font:inherit;font-size:11.5px;font-weight:900;
+  cursor:pointer;white-space:nowrap;transition:all .14s ease}
+.day span{font-weight:800;opacity:.75;margin-left:6px;font-size:10px}
 .day.on{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* 記録に写真を足す */
@@ -947,11 +947,15 @@ function toggle(id){
 /* ── 日別ストリップ。選んだ日のルートと戦績を見る ── */
 function dayStrip(){
   const days = Object.keys(S.hist.days).filter(d => S.hist.days[d].length).sort().reverse();
+  const el = document.getElementById('ds');
+  /* 切り替える先が無い時は出さない（1個だけ置いても場所を食うだけ） */
+  if(days.length < 2){ el.innerHTML = ''; el.hidden = true; return; }
+  el.hidden = false;
   if(!days.includes(today())) days.unshift(today());
-  document.getElementById('ds').innerHTML = days.map(d=>{
+  el.innerHTML = days.map(d=>{
     const n = dayIds(d).length, ph = S.media.filter(m=>m.day===d).length;
     return '<button class="day'+(d===S.viewDay?' on':'')+'" data-d="'+d+'">'
-      + '<b>'+fmtDay(d)+'</b><span>'+n+'台'+(ph?' / 📷'+ph:'')+'</span></button>';
+      + fmtDay(d)+'<span>'+n+'台'+(ph?'・📷'+ph:'')+'</span></button>';
   }).join('');
   document.querySelectorAll('.day').forEach(b => b.onclick = () => {
     S.viewDay = b.dataset.d; render();
