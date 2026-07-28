@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
+<script src="https://open.spotify.com/embed/iframe-api/v1.js" async></script>
 <style>
 :root{
   --bg:#0E141C;          /* 地：夜の藍 */
@@ -115,6 +116,127 @@ svg.map:active{cursor:grabbing}
 .route{fill:none;stroke:#1F6FEB;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:8 6;opacity:.95}
 
+.mbadge{font-size:11px;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.mcnt{font-size:9px;font-weight:900;fill:#463B2B;text-anchor:middle;paint-order:stroke;
+  stroke:rgba(255,251,242,.9);stroke-width:3px}
+.pth{cursor:zoom-in}
+
+/* 日別ストリップ */
+.daystrip{display:flex;gap:7px;overflow-x:auto;padding:11px 4px 3px;scrollbar-width:none}
+.daystrip::-webkit-scrollbar{display:none}
+.day{
+  flex:none;border:1px solid var(--line);background:var(--bg2);color:var(--sub);
+  border-radius:12px;padding:6px 13px;font:inherit;cursor:pointer;text-align:left;
+  transition:all .14s ease}
+.day b{display:block;font-size:12.5px;font-weight:900;line-height:1.35}
+.day span{font-size:9.5px;font-weight:800;opacity:.85}
+.day.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* 記録に写真を足す */
+.tl-h{display:flex;align-items:center;gap:8px}
+.tl-h>span{flex:1;min-width:0}
+.cam{flex:none;border:1px solid var(--line);background:var(--bg2);border-radius:10px;
+  width:32px;height:30px;font-size:14px;cursor:pointer;line-height:1;
+  transition:transform .12s var(--spring),border-color .12s ease}
+.cam:hover{transform:translateY(-2px);border-color:var(--sky)}
+.cam:active{transform:scale(.92)}
+.film{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.film::-webkit-scrollbar{display:none}
+.th{position:relative;border:1px solid var(--line);background:var(--bg2);border-radius:11px;
+  overflow:hidden;cursor:zoom-in;padding:0;display:block;
+  transition:transform .14s var(--ease-out)}
+.th:hover{transform:translateY(-2px)}
+.th img,.th video{display:block;width:100%;height:100%;object-fit:cover}
+.th.sm{flex:none;width:58px;height:58px;border-radius:10px}
+.th i{position:absolute;inset:auto 4px 3px auto;font-size:10px;font-style:normal;
+  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.th span{position:absolute;left:0;right:0;bottom:0;font-size:9px;font-weight:800;color:#fff;
+  padding:9px 5px 4px;background:linear-gradient(transparent,rgba(0,0,0,.72));text-align:left}
+.grid-m{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.grid-m .th{aspect-ratio:1}
+.sec small{font-size:10.5px;color:var(--sub);font-weight:800}
+
+/* プラン */
+.proute{fill:none;stroke:#F07C1F;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
+.pno text{font-size:11px;font-weight:900;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.lead{font-size:12px;color:var(--sub);line-height:1.85;margin-bottom:13px;font-weight:700}
+.plan{list-style:none;margin-bottom:12px}
+.plan li{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);
+  border-radius:13px;padding:9px 11px;margin-bottom:7px}
+.plan li b{width:26px;height:26px;flex:none;border-radius:9px;background:#F07C1F;color:#1B1206;
+  display:grid;place-items:center;font-size:14px}
+.plan li>span{flex:1;min-width:0;font-size:13px;font-weight:800;line-height:1.45}
+.plan li small{display:block;font-size:10.5px;color:var(--sub);font-weight:700}
+.mv{flex:none;width:29px;height:29px;border-radius:9px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--sub);font:inherit;font-size:13px;cursor:pointer}
+.mv:hover{border-color:var(--sky);color:var(--sky)}
+.mv.rm:hover{border-color:var(--bad);color:var(--bad)}
+.pick2{display:flex;flex-wrap:wrap;gap:6px}
+.pk{border:1px solid var(--line);background:var(--bg2);color:var(--sub);border-radius:999px;
+  padding:6px 12px;font:inherit;font-size:11.5px;font-weight:800;cursor:pointer;
+  transition:all .14s ease}
+.pk i{font-style:normal;margin-right:5px}
+.pk:hover{border-color:var(--sky);color:var(--sky)}
+.pk.on{background:color-mix(in srgb,#F07C1F 24%,var(--bg2));border-color:#F07C1F;color:#FFC48A}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+.act{flex:1;min-width:120px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);
+  border-radius:12px;padding:11px 8px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;
+  transition:transform .12s var(--spring),border-color .12s ease}
+.act:hover{transform:translateY(-2px);border-color:var(--sky)}
+.act:active{transform:scale(.97)}
+.act.on{background:color-mix(in srgb,var(--gold) 20%,var(--bg2));border-color:var(--gold);color:var(--gold)}
+.act.big{background:var(--accent);border-color:var(--accent);color:#fff;flex:2}
+
+/* 詳細ポップアップ */
+.hero{border-radius:14px;overflow:hidden;margin-bottom:13px;background:var(--bg2)}
+.hero img,.hero video{display:block;width:100%;max-height:230px;object-fit:cover}
+.hero .ph{height:150px;display:grid;place-items:center;gap:6px;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 16%,var(--bg2)),var(--bg2))}
+.hero .ph span{font-size:46px;line-height:1}
+.hero .ph small{font-size:10.5px;color:var(--sub);font-weight:800}
+.bdg{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.w2{border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:900;color:#1B1206}
+.w2.off{background:#2B3A4C;color:var(--sub)}
+.tg{border:1px solid var(--line);color:var(--sub);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800}
+.tg.done{border-color:var(--gold);color:var(--gold)}
+.desc{font-size:13px;line-height:1.85}
+.desc.dim{color:var(--sub);font-size:12px}
+.note-s{font-size:10.5px;color:var(--sub);line-height:1.75;margin:10px 0;font-weight:700}
+#sp-embed{border-radius:12px;overflow:hidden;min-height:80px}
+
+/* 天気 */
+.wx{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg2);
+  border-radius:999px;padding:5px 11px 5px 9px;font:inherit;cursor:pointer;color:var(--ink);
+  transition:transform .12s var(--spring),border-color .12s ease}
+.wx:hover{transform:translateY(-1px);border-color:var(--sky)}
+.wx span{font-size:13px;line-height:1}
+.wx b{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums}
+.wxrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.wxrow::-webkit-scrollbar{display:none}
+.wxh{flex:none;width:56px;text-align:center;background:var(--bg2);border:1px solid var(--line);
+  border-radius:12px;padding:9px 4px}
+.wxh span{display:block;font-size:10px;color:var(--sub);font-weight:800}
+.wxh b{display:block;font-size:19px;margin:3px 0;line-height:1.1}
+.wxh em{display:block;font-style:normal;font-size:13px;font-weight:900}
+.wxh i{display:block;font-style:normal;font-size:10px;color:var(--sky);font-weight:800;margin-top:2px}
+
+/* 拡大ビューア */
+.viewer[hidden]{display:none}
+.viewer{position:fixed;inset:0;z-index:70;background:rgba(4,7,11,.93);
+  display:flex;align-items:center;justify-content:center;padding:18px;animation:fade .2s ease both}
+.vw-in{position:relative;max-width:min(94vw,760px);width:100%}
+.vw-in img,.vw-in video{display:block;width:100%;max-height:74vh;object-fit:contain;border-radius:14px}
+.vw-b{display:flex;align-items:center;gap:10px;margin-top:11px;color:var(--ink)}
+.vw-b b{font-size:13px;font-weight:800;flex:1;min-width:0}
+.vw-b span{font-size:11px;color:var(--sub);font-weight:800;white-space:nowrap}
+.vw-del{border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:999px;
+  padding:5px 13px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.vw-del:hover{border-color:var(--bad);color:var(--bad)}
+.vw-n{position:absolute;top:50%;transform:translateY(-50%);border:0;cursor:pointer;
+  background:rgba(255,255,255,.14);color:#fff;width:42px;height:60px;font-size:26px;line-height:1}
+.vw-p{left:0;border-radius:0 12px 12px 0}
+.vw-x{right:0;border-radius:12px 0 0 12px}
+
 /* 先輩のテーマ */
 .honey{
   border:1px solid var(--line);background:var(--bg2);border-radius:999px;
@@ -123,6 +245,7 @@ svg.map:active{cursor:grabbing}
 }
 .honey:hover{transform:translateY(-1px) rotate(-8deg);border-color:var(--gold)}
 .honey:active{transform:scale(.9)}
+.sheet[hidden]{display:none}   /* display:flex は hidden より強いので明示 */
 .sheet{position:fixed;inset:0;z-index:60;background:rgba(6,10,15,.66);
   display:flex;align-items:flex-end;justify-content:center;animation:fade .2s ease both}
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -231,7 +354,8 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 <header>
   <div class="wrap hbar">
     <div class="logo"><b>パークログ</b><span class="dsp">USJ</span></div>
-    <button class="honey" id="hn" aria-label="先輩のテーマを再生">🍯</button>
+    <button class="wx" id="wx" aria-label="天気予報"><span id="wxi">·</span><b id="wxt">--</b></button>
+    <button class="honey" id="hn" aria-label="くまのプーさんを再生">🍯</button>
     <button class="rf" id="rf">更新</button>
   </div>
 </header>
@@ -255,6 +379,7 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
         <button id="zr" aria-label="全体表示">⤢</button>
       </div>
     </div>
+    <div class="daystrip" id="ds"></div>
     <div class="legend">
       <span><i style="background:#3FBF6F"></i>〜20分</span>
       <span><i style="background:#F5B942"></i>〜50分</span>
@@ -265,7 +390,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-t="list">待ち時間</button>
-    <button class="tab" role="tab" aria-selected="false" data-t="log">今日の戦績</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="plan">プラン</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="log">戦績</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="alb">写真</button>
   </div>
 
   <section id="p-list">
@@ -278,17 +405,33 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
     <div id="rows"></div>
   </section>
 
+  <section id="p-plan" class="hide"></section>
   <section id="p-log" class="hide"></section>
+  <section id="p-alb" class="hide"></section>
 
 </main>
+
+<input type="file" id="pick" accept="image/*,video/*" multiple hidden>
+<div class="viewer" id="vw" hidden><div class="vw-in" id="vwin"></div></div>
+<div class="sheet" id="det" hidden><div class="sheet-in" id="detin"></div></div>
+
+<div class="sheet" id="wxs" hidden>
+  <div class="sheet-in">
+    <h3>今日のUSJの天気</h3>
+    <p>ユニバーサル・シティ周辺・1時間ごと</p>
+    <div class="wxrow" id="wxb"></div>
+    <button class="danger" id="wxx" style="width:100%;margin-top:14px">閉じる</button>
+  </div>
+</div>
 
 <div class="sheet" id="sh" hidden>
   <div class="sheet-in">
     <h3>くまのプーさん</h3>
-    <p>お使いの音楽アプリで開きます</p>
-    <a id="m-sp" href="#" target="_blank" rel="noopener"><i>🟢</i>Spotify で聴く</a>
-    <a id="m-am" href="#" target="_blank" rel="noopener"><i>🍎</i>Apple Music で聴く</a>
-    <a id="m-ym" href="#" target="_blank" rel="noopener"><i>▶️</i>YouTube Music で聴く</a>
+    <p>歌い出し（0:24）から再生します</p>
+    <div id="sp-embed"></div>
+    <p class="note-s">音が出ない時は下のリンクからどうぞ。Spotifyにログインしていないと30秒だけの再生になります。</p>
+    <a id="m-sp" href="#" target="_blank" rel="noopener"><i>🟢</i>Spotify アプリで開く</a>
+    <a id="m-am" href="#" target="_blank" rel="noopener"><i>🍎</i>Apple Music で探す</a>
     <button class="danger" id="shx" style="width:100%;margin-top:10px">閉じる</button>
   </div>
 </div>
@@ -337,6 +480,34 @@ const JA = {
 };
 const ja = n => JA[n] || n;
 
+/* アトラクションの概要。公式の写真・文章は使えないので自分で書く。
+   ponytail: 未収録は説明なしで出る。足したい時はここに1行 */
+const INFO = {
+  'ドンキーコングのクレイジー・トロッコ':{e:'🛒',t:'絶叫',d:'レールの切れ目をトロッコが飛び越える、世界初の仕掛け。見た目より揺れる。'},
+  'マリオカート 〜クッパの挑戦状〜':{e:'🐢',t:'ライド',d:'ARゴーグルで甲羅を投げながら走る。並ぶ価値があるのは中の作り込み。'},
+  'ヨッシー・アドベンチャー':{e:'🥚',t:'ファミリー',d:'屋外をゆっくり一周。エリア全体を見下ろせるので写真はここが一番。'},
+  'ハリー・ポッター・アンド・ザ・フォービドゥン・ジャーニー':{e:'🧙',t:'ライド',d:'城の中を飛び回る。並んでいる間の城内も見どころなので急がない方がいい。'},
+  'フライト・オブ・ザ・ヒッポグリフ':{e:'🦅',t:'ファミリー',d:'1分ほどの短いコースター。城を見上げる画が撮れる。'},
+  'ハリウッド・ドリーム・ザ・ライド':{e:'🎧',t:'絶叫',d:'曲を選んで乗る。垂直に上がって落ちる、パークの象徴。'},
+  'ハリウッド・ドリーム 〜バックドロップ〜':{e:'🔙',t:'絶叫',d:'同じコースを後ろ向きで。落ちる先が見えないぶん別物になる。'},
+  'ザ・フライング・ダイナソー':{e:'🦖',t:'絶叫',d:'うつ伏せでぶら下がったまま飛ぶ。国内最長・最大落差。覚悟して並ぶこと。'},
+  'ジュラシック・パーク・ザ・ライド':{e:'🚤',t:'ライド',d:'ボートで恐竜の谷へ。最後に25m落下する。前列は確実に濡れる。'},
+  'ジョーズ':{e:'🦈',t:'ライド',d:'ボートでサメに襲われる。乗り物より船長の演技を見るアトラクション。'},
+  'ミニオン・ハチャメチャ・ライド':{e:'🍌',t:'ライド',d:'巨大ドームの映像で振り回される。酔いやすい人は前日の食事から注意。'},
+  'フリーズ・レイ・スライダー':{e:'🧊',t:'ファミリー',d:'短い滑り台。子連れの合間の一本にちょうどいい。'},
+  'ヴィラン・コン ミニオン・ブラスト':{e:'🔫',t:'歩く',d:'歩きながら撃つシューティング。列の進みが早いので待ち時間の見た目ほど待たない。'},
+  'スペース・ファンタジー・ザ・ライド':{e:'🌟',t:'絶叫',d:'屋内で回転しながら進む。暗いので苦手な人は要注意。'},
+  'スペース・ファンタジー（CLUB ZEDD）':{e:'🎛',t:'絶叫',d:'期間限定の音楽版。中身は同じコース。'},
+  'スヌーピーのグレートレース':{e:'🐶',t:'ファミリー',d:'屋内のミニコースター。小さい子の最初の1本に。'},
+  'フライング・スヌーピー':{e:'✈️',t:'ファミリー',d:'ゆっくり回るだけ。待ち時間が短ければ休憩がわりに。'},
+  'ハローキティのカップケーキ・ドリーム':{e:'🎀',t:'ファミリー',d:'ほぼ記念撮影用。回転はごく穏やか。'},
+  '呪術廻戦 ザ・リアル 4-D':{e:'👁',t:'シアター',d:'座って見る4-D。期間限定なので今のうちに。'},
+  '名探偵コナン 4-Dライブ・ショー':{e:'🔍',t:'シアター',d:'生の俳優と映像を組み合わせたショー。回数が決まっている。'},
+  '名探偵コナン・ザ・ワールド':{e:'🕵️',t:'歩く',d:'歩いて回る展示型。待ち時間の割に中は空いている。'},
+  'ウォーターワールド':{e:'💥',t:'ショー',d:'屋外スタントショー。前方の席は本当にずぶ濡れになる。'}
+};
+const info = n => INFO[n] || {e:'🎡', t:'', d:''};
+
 /* エリア（座標から手置き）。地図の"場所感"を出すためだけの背景 */
 const ZONES = [
   {n:'スーパー・ニンテンドー・ワールド', la:34.66800, lo:135.43005, r:96, c:'#E2574C'},
@@ -356,6 +527,7 @@ try{
   S.hist = JSON.parse(localStorage.getItem(LS)) || {};
   S.hist.days = S.hist.days || {};
   S.hist.names = S.hist.names || {};
+  S.hist.waits = S.hist.waits || {};   /* 記録した時点の待ち時間。後から見返す時に正しい */
   /* v1（日付を持たない当日ぶんだけの配列）からの引き継ぎ */
   const v1 = JSON.parse(localStorage.getItem('usjlog.v1') || 'null');
   if(Array.isArray(v1) && v1.length && !S.hist.days[today()]) S.hist.days[today()] = v1;
@@ -363,7 +535,44 @@ try{
 }catch(e){ S.hist = {days:{},names:{}}; }
 if(!S.hist.days[today()]) S.hist.days[today()] = [];
 S.log = S.hist.days[today()];        /* 参照を保持。中身だけ触ること */
+S.viewDay = today();                 /* 地図と戦績が見ている日 */
+S.media = [];
+S.plan = [];
+/* 共有リンク（#p=xxxxxxxx.yyyyyyyy）。実IDへの解決はデータが来てから */
+const planSeed = (location.hash.match(/[#&]p=([\w.]+)/) || [,''])[1].split('.').filter(Boolean);
 const save = () => localStorage.setItem(LS, JSON.stringify(S.hist));
+
+const dayIds  = d => S.hist.days[d] || [];
+const dayDone = () => dayIds(S.viewDay);
+/* 過去の日はAPIに無いこともあるので、名前は記録時のものにフォールバック */
+const rideOf = id => S.data.find(x=>x.id===id) || (S.hist.names[id] ? {id, name:S.hist.names[id]} : null);
+const waitOf = (d,id) => (S.hist.waits[d]||{})[id];
+const mediaOf = (d,id) => S.media.filter(m => m.day===d && m.ride===id);
+const fmtDay = d => d===today() ? '今日'
+  : (+d.slice(5,7)) + '/' + (+d.slice(8,10));
+
+/* ── 写真・動画。localStorageには入らないので IndexedDB に実体で持つ ── */
+let DBP;
+const db = () => DBP || (DBP = new Promise((res,rej)=>{
+  const r = indexedDB.open('usjlog', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('media', {keyPath:'k'});
+  r.onsuccess = () => res(r.result);
+  r.onerror  = () => rej(r.error);
+}));
+const tx = (mode, fn) => db().then(d => new Promise((res,rej)=>{
+  const t = d.transaction('media', mode), q = fn(t.objectStore('media'));
+  t.oncomplete = () => res(q && q.result);
+  t.onerror = () => rej(t.error);
+}));
+const mediaAll = () => tx('readonly', s => s.getAll());
+const mediaPut = r => tx('readwrite', s => s.put(r));
+const mediaDel = k => tx('readwrite', s => s.delete(k));
+
+const urls = new Map();
+const urlOf = m => {
+  if(!urls.has(m.k)) urls.set(m.k, URL.createObjectURL(m.blob));
+  return urls.get(m.k);
+};
 
 /* 緯度経度 → 画面座標。パークは約600m四方なのでメルカトル補正は不要、
    経度だけ cos(緯度) で潰せば実寸比になる */
@@ -402,6 +611,10 @@ async function load(){
       /* 同一ライドの別バージョン（バックドロップ等）が同名で重複するので落とす */
       .filter(x => seen[x.name] ? false : (seen[x.name] = 1));
 
+    if(planSeed.length && !S.plan.length){
+      S.plan = planSeed.map(p => (S.data.find(x => x.id.startsWith(p)) || {}).id).filter(Boolean);
+      if(S.plan.length) document.querySelector('[data-t="plan"]').click();
+    }
     render();
   }catch(e){
     document.getElementById('clv').textContent = '取得に失敗しました';
@@ -410,7 +623,7 @@ async function load(){
   b.dataset.busy = ''; b.textContent = '更新';
 }
 
-function render(){ crowd(); map(); rows(); logPane(); }
+function render(){ crowd(); dayStrip(); map(); rows(); planPane(); logPane(); albumPane(); }
 
 function crowd(){
   const ws = S.data.filter(x=>x.open && x.wait!=null).map(x=>x.wait);
@@ -484,7 +697,18 @@ function map(){
                     .map(x => ({...x, x:px(x.lo), y:py(x.la)}));
   declutter(pts, 39);
 
-  const done = S.log.map(id => pts.find(p=>p.id===id)).filter(Boolean);
+  /* 計画したルート（これから行く順）*/
+  const plan = S.plan.map(id => pts.find(p=>p.id===id)).filter(Boolean);
+  if(plan.length>1){
+    s += '<polyline class="proute" points="'+plan.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
+  }
+  plan.forEach((p,i)=>{
+    s += '<g class="pno"><circle cx="'+(p.x-16).toFixed(1)+'" cy="'+(p.y-15).toFixed(1)+'" r="10.5" fill="#F07C1F"/>'
+      +  '<text x="'+(p.x-16).toFixed(1)+'" y="'+(p.y-15).toFixed(1)+'">'+(i+1)+'</text></g>';
+  });
+
+  /* 実際に回ったルート */
+  const done = dayDone().map(id => pts.find(p=>p.id===id)).filter(Boolean);
   if(done.length>1){
     s += '<polyline class="route" points="'+done.map(d=>d.x.toFixed(1)+','+d.y.toFixed(1)).join(' ')+'"/>';
   }
@@ -503,7 +727,7 @@ function map(){
     return null;   /* 置き場所が無ければ描かない。名前はリストと吹き出しにある */
   };
   pts.forEach(p=>{
-    const on = S.log.includes(p.id), ly = slot(p);
+    const on = dayDone().includes(p.id), ly = slot(p);
     s += '<g class="pin'+(on?' done':'')+'" data-id="'+p.id+'">'
        +   '<title>'+esc(p.name)+' / '+p.wait+'分待ち</title>'
        +   '<circle class="dot" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="15" fill="'+color(p.wait)+'"/>'
@@ -512,9 +736,33 @@ function map(){
            '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle">'+esc(p.name.slice(0,8))+'</text>')
        + '</g>';
   });
+  /* 撮った写真をその場所のピンに刺す（ride-log と同じ考え方） */
+  pts.forEach(p=>{
+    const ms = mediaOf(S.viewDay, p.id);
+    if(!ms.length) return;
+    const im = ms.find(m=>m.kind==='image');
+    const cx = (p.x+15).toFixed(1), cy = (p.y-15).toFixed(1), r = 12, cid = 'cp'+p.id.slice(0,8);
+    s += '<g class="pth" data-id="'+p.id+'">'
+      + (im
+        ? '<clipPath id="'+cid+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath>'
+          + '<image href="'+urlOf(im)+'" x="'+(cx-r)+'" y="'+(cy-r)+'" width="'+(r*2)+'" height="'+(r*2)+'" '
+          + 'clip-path="url(#'+cid+')" preserveAspectRatio="xMidYMid slice"/>'
+        : '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#2B2118"/>'
+          + '<text class="mbadge" x="'+cx+'" y="'+cy+'">▶</text>')
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#fff" stroke-width="2.5"/>'
+      + (ms.length>1 ? '<text class="mcnt" x="'+cx+'" y="'+(+cy+r+9)+'">'+ms.length+'</text>' : '')
+      + '</g>';
+  });
+
   const vp = document.getElementById('vp');
   vp.innerHTML = s;
-  vp.querySelectorAll('.pin').forEach(g => g.onclick = e => { if(!dragged) toggle(g.dataset.id); });
+  vp.querySelectorAll('.pth').forEach(g => g.onclick = e => {
+    e.stopPropagation();
+    if(dragged) return;
+    const ms = mediaOf(S.viewDay, g.dataset.id);
+    if(ms.length) openViewer(ms, 0);
+  });
+  vp.querySelectorAll('.pin').forEach(g => g.onclick = () => { if(!dragged) openInfo(g.dataset.id); });
 }
 
 /* ── ズーム／パン。viewBox ではなく g の transform を動かす ── */
@@ -599,40 +847,251 @@ function rows(){
 }
 
 function toggle(id){
+  if(S.viewDay !== today()){          /* 過去の日を見ている時は書き換えない */
+    S.viewDay = today(); render(); return;
+  }
   const i = S.log.indexOf(id);
   if(i>=0) S.log.splice(i,1);
   else{
     S.log.push(id);
     const a = S.data.find(x=>x.id===id);
-    if(a) S.hist.names[id] = a.name;   /* APIから消えた後も通算に名前を残す */
+    if(a){
+      S.hist.names[id] = a.name;      /* APIから消えた後も通算に名前を残す */
+      (S.hist.waits[today()] ||= {})[id] = a.wait;
+    }
   }
   save(); render();
 }
 
-function logPane(){
-  const el = document.getElementById('p-log');
-  const items = S.log.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+/* ── 日別ストリップ。選んだ日のルートと戦績を見る ── */
+function dayStrip(){
+  const days = Object.keys(S.hist.days).filter(d => S.hist.days[d].length).sort().reverse();
+  if(!days.includes(today())) days.unshift(today());
+  document.getElementById('ds').innerHTML = days.map(d=>{
+    const n = dayIds(d).length, ph = S.media.filter(m=>m.day===d).length;
+    return '<button class="day'+(d===S.viewDay?' on':'')+'" data-d="'+d+'">'
+      + '<b>'+fmtDay(d)+'</b><span>'+n+'台'+(ph?' / 📷'+ph:'')+'</span></button>';
+  }).join('');
+  document.querySelectorAll('.day').forEach(b => b.onclick = () => {
+    S.viewDay = b.dataset.d; render();
+  });
+}
 
-  /* ── 今日 ── */
-  let html;
-  if(!items.length){
-    html = '<div class="empty">今日はまだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ルートと戦績がここに残ります。</div>';
-  }else{
+/* ── 写真・動画を足す ── */
+let pickFor = null;
+function addMedia(id){
+  if(S.viewDay !== today()){ alert('写真を足せるのは今日の記録だけです'); return; }
+  pickFor = id;
+  document.getElementById('pick').click();
+}
+document.getElementById('pick').onchange = async function(){
+  if(!pickFor || !this.files.length) return;
+  const a = S.data.find(x=>x.id===pickFor);
+  for(const f of this.files){
+    await mediaPut({
+      k: pickFor + '_' + f.name + '_' + f.size + '_' + f.lastModified,
+      day: today(), ride: pickFor, name: a ? a.name : '',
+      kind: f.type.startsWith('video') ? 'video' : 'image',
+      blob: f
+    });
+  }
+  this.value = ''; pickFor = null;
+  S.media = await mediaAll();
+  render();
+};
+
+/* ── 拡大ビューア ── */
+function openViewer(list, i){
+  const vw = document.getElementById('vw'), box = document.getElementById('vwin');
+  const draw = n => {
+    const m = list[n = (n+list.length)%list.length];
+    box.innerHTML = (m.kind==='video'
+        ? '<video src="'+urlOf(m)+'" controls playsinline autoplay></video>'
+        : '<img src="'+urlOf(m)+'" alt="">')
+      + '<div class="vw-b"><b>'+esc(m.name||'')+'</b>'
+      +   '<span>'+fmtDay(m.day)+'　'+(n+1)+' / '+list.length+'</span>'
+      +   '<button class="vw-del" data-k="'+m.k+'">削除</button></div>'
+      + (list.length>1 ? '<button class="vw-n vw-p" data-n="'+(n-1)+'">‹</button>'
+                       + '<button class="vw-n vw-x" data-n="'+(n+1)+'">›</button>' : '');
+    box.querySelectorAll('.vw-n').forEach(b => b.onclick = e => { e.stopPropagation(); draw(+b.dataset.n); });
+    box.querySelector('.vw-del').onclick = async e => {
+      e.stopPropagation();
+      if(!confirm('この1件を削除します。よろしいですか？')) return;
+      await mediaDel(m.k); S.media = await mediaAll(); vw.hidden = true; render();
+    };
+  };
+  draw(i); vw.hidden = false;
+  vw.onclick = e => { if(e.target === vw) vw.hidden = true; };
+}
+
+/* ── アトラクションの詳細ポップアップ ── */
+function openInfo(id){
+  const a = S.data.find(x=>x.id===id); if(!a) return;
+  const nf = info(a.name), ms = mediaOf(S.viewDay, id);
+  const on = dayDone().includes(id), pi = S.plan.indexOf(id);
+  const hero = ms.length
+    ? (ms[0].kind==='video' ? '<video src="'+urlOf(ms[0])+'" controls playsinline></video>'
+                            : '<img src="'+urlOf(ms[0])+'" alt="">')
+    : '<div class="ph"><span>'+nf.e+'</span><small>まだ写真がありません</small></div>';
+  const det = document.getElementById('det');
+  document.getElementById('detin').innerHTML =
+      '<div class="hero">'+hero+'</div>'
+    + '<h3>'+esc(a.name)+'</h3>'
+    + '<div class="bdg">'
+    +   (a.open && a.wait!=null
+          ? '<span class="w2" style="background:'+color(a.wait)+'">'+a.wait+'分待ち</span>'
+          : '<span class="w2 off">休止中</span>')
+    +   (nf.t ? '<span class="tg">'+nf.t+'</span>' : '')
+    +   (on ? '<span class="tg done">記録済み</span>' : '')
+    + '</div>'
+    + (nf.d ? '<p class="desc">'+nf.d+'</p>' : '<p class="desc dim">解説はまだ書いていません。</p>')
+    + (ms.length>1 ? '<div class="film">' + ms.slice(1).map(m =>
+        '<button class="th sm" data-d="'+S.viewDay+'" data-k="'+m.k+'">'
+        + (m.kind==='video' ? '<video src="'+urlOf(m)+'" muted></video><i>▶</i>'
+                            : '<img src="'+urlOf(m)+'" alt="" loading="lazy">')
+        + '</button>').join('') + '</div>' : '')
+    + '<div class="acts">'
+    +   '<button class="act'+(on?' on':'')+'" id="d-ride">'+(on?'✓ 記録済み':'＋ 乗った')+'</button>'
+    +   '<button class="act" id="d-cam">📷 写真</button>'
+    +   '<button class="act'+(pi>=0?' on':'')+'" id="d-plan">'+(pi>=0?'✓ プラン '+(pi+1)+'番目':'🗺 プランに追加')+'</button>'
+    + '</div>'
+    + '<button class="danger" id="d-x" style="width:100%;margin-top:12px">閉じる</button>';
+
+  const close = () => det.hidden = true;
+  document.getElementById('d-x').onclick = close;
+  det.onclick = e => { if(e.target === det) close(); };
+  document.getElementById('d-ride').onclick = () => { toggle(id); openInfo(id); };
+  document.getElementById('d-cam').onclick  = () => { close(); addMedia(id); };
+  document.getElementById('d-plan').onclick = () => { planToggle(id); openInfo(id); };
+  det.querySelectorAll('.th').forEach(b => b.onclick = () => {
+    const l = S.media.filter(m=>m.day===b.dataset.d);
+    openViewer(l, l.findIndex(m=>m.k===b.dataset.k));
+  });
+  det.hidden = false;
+}
+
+/* ── ルート計画。URLに載せて他の人に渡せる ── */
+const planToggle = id => {
+  const i = S.plan.indexOf(id);
+  if(i>=0) S.plan.splice(i,1); else S.plan.push(id);
+  render();
+};
+const planMove = (i, d) => {
+  const j = i+d;
+  if(j<0 || j>=S.plan.length) return;
+  [S.plan[i], S.plan[j]] = [S.plan[j], S.plan[i]];
+  render();
+};
+/* UUIDは長いので先頭8文字だけ載せ、開いた側で前方一致で戻す */
+const planUrl = () => location.origin + location.pathname
+  + '#p=' + S.plan.map(id => id.slice(0,8)).join('.');
+
+function planPane(){
+  const el = document.getElementById('p-plan');
+  const items = S.plan.map(id => S.data.find(x=>x.id===id)).filter(Boolean);
+  let html = '<p class="lead">乗りたい順に選ぶと、地図にその順路が出ます。'
+    + 'できたリンクを送れば、相手の画面にも同じ順路が出ます。</p>';
+
+  if(items.length){
     const wait = items.reduce((a,b)=>a+(b.wait||0),0);
     let dist = 0;
     for(let i=1;i<items.length;i++) dist += meters(items[i-1], items[i]);
+    html += '<div class="stats"><div class="st"><div class="k">WAIT (今の待ちで試算)</div>'
+      +   '<div class="v dsp num">'+wait+'<em>分</em></div></div>'
+      +   '<div class="st"><div class="k">WALK</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km</em></div></div></div>'
+      + '<ol class="plan">' + items.map((x,i)=>
+          '<li><b class="dsp num">'+(i+1)+'</b><span>'+esc(x.name)
+          + '<small class="num">'+(x.wait!=null?x.wait+'分待ち':'休止中')+'</small></span>'
+          + '<button class="mv" data-i="'+i+'" data-d="-1" aria-label="上へ">↑</button>'
+          + '<button class="mv" data-i="'+i+'" data-d="1" aria-label="下へ">↓</button>'
+          + '<button class="mv rm" data-x="'+x.id+'" aria-label="外す">×</button></li>').join('')
+      + '</ol>'
+      + '<div class="acts"><button class="act big" id="p-share">🔗 このプランを共有</button>'
+      + '<button class="act" id="p-clear">全部消す</button></div>';
+  }else{
+    html += '<div class="empty">まだ何も入っていません。<br>下のリストの <b>🗺</b> か、地図のピンから追加できます。</div>';
+  }
+
+  html += '<h2 class="sec">アトラクションから選ぶ</h2><div class="pick2">'
+    + S.data.filter(x=>x.open).map(x =>
+        '<button class="pk'+(S.plan.includes(x.id)?' on':'')+'" data-p="'+x.id+'">'
+        + '<i>'+info(x.name).e+'</i>'+esc(x.name)+'</button>').join('')
+    + '</div>';
+
+  el.innerHTML = html;
+  el.querySelectorAll('.mv').forEach(b => b.onclick = () =>
+    b.dataset.x ? planToggle(b.dataset.x) : planMove(+b.dataset.i, +b.dataset.d));
+  el.querySelectorAll('.pk').forEach(b => b.onclick = () => planToggle(b.dataset.p));
+  const cl = document.getElementById('p-clear');
+  if(cl) cl.onclick = () => { S.plan = []; render(); };
+  const sh = document.getElementById('p-share');
+  if(sh) sh.onclick = async () => {
+    const url = planUrl(), text = 'USJの回り方（' + items.map(x=>x.name).join(' → ') + '）';
+    try{
+      if(navigator.share) await navigator.share({title:'パークログ USJ', text, url});
+      else { await navigator.clipboard.writeText(url); sh.textContent = '✓ リンクをコピーしました'; }
+    }catch(e){}
+  };
+}
+
+/* ── アルバム ── */
+function albumPane(){
+  const el = document.getElementById('p-alb');
+  if(!S.media.length){
+    el.innerHTML = '<div class="empty">まだ写真がありません。<br>戦績タブの各アトラクションの <b>📷</b> から、<br>その場で撮った写真・動画を足せます。</div>';
+    return;
+  }
+  const days = [...new Set(S.media.map(m=>m.day))].sort().reverse();
+  el.innerHTML = days.map(d=>{
+    const ms = S.media.filter(m=>m.day===d);
+    return '<h2 class="sec">'+fmtDay(d)+'<small>　'+ms.length+'点</small></h2><div class="grid-m">'
+      + ms.map(m => '<button class="th" data-d="'+d+'" data-k="'+m.k+'">'
+          + (m.kind==='video' ? '<video src="'+urlOf(m)+'" muted></video><i>▶</i>'
+                              : '<img src="'+urlOf(m)+'" alt="" loading="lazy">')
+          + '<span>'+esc((m.name||'').slice(0,10))+'</span></button>').join('')
+      + '</div>';
+  }).join('');
+  el.querySelectorAll('.th').forEach(b => b.onclick = () => {
+    const ms = S.media.filter(m=>m.day===b.dataset.d);
+    openViewer(ms, ms.findIndex(m=>m.k===b.dataset.k));
+  });
+}
+
+function logPane(){
+  const el = document.getElementById('p-log');
+  const D = S.viewDay;
+  const items = dayIds(D).map(rideOf).filter(Boolean);
+
+  /* ── 選んだ日 ── */
+  let html;
+  if(!items.length){
+    html = '<div class="empty">'+(D===today()?'今日は':fmtDay(D)+'は')+'まだ記録がありません。<br>乗ったアトラクションの <b>＋</b> を押すと、<br>ルートと戦績がここに残ります。</div>';
+  }else{
+    const wait = items.reduce((a,b)=>a+(waitOf(D,b.id) ?? b.wait ?? 0),0);
+    const geo = items.filter(x=>x.la!=null);
+    let dist = 0;
+    for(let i=1;i<geo.length;i++) dist += meters(geo[i-1], geo[i]);
     /* ponytail: 移動距離は記録順の直線距離の合計。実際の順路より短く出る。
        GPSを入れるならここを置き換える */
     html =
       '<div class="stats">'
-      + '<div class="st hero"><div class="k">TODAY</div><div class="v dsp num">'+items.length+'<em>アトラクション制覇</em></div></div>'
+      + '<div class="st hero"><div class="k">'+(D===today()?'TODAY':fmtDay(D))+'</div><div class="v dsp num">'+items.length+'<em>アトラクション制覇</em></div></div>'
       + '<div class="st"><div class="k">TOTAL WAIT</div><div class="v dsp num">'+wait+'<em>分 並んだ</em></div></div>'
       + '<div class="st"><div class="k">DISTANCE</div><div class="v dsp num">'+(dist/1000).toFixed(2)+'<em>km 歩いた</em></div></div>'
       + '</div>'
-      + '<ol class="tl">' + items.map(x =>
-          '<li>'+esc(x.name)+'<small class="num">'+(x.wait!=null?x.wait+'分待ち':'—')+'</small></li>').join('')
+      + '<ol class="tl">' + items.map(x=>{
+          const w = waitOf(D,x.id) ?? x.wait, ms = mediaOf(D,x.id);
+          return '<li><div class="tl-h"><span>'+esc(x.name)+'<small class="num">'+(w!=null?w+'分待ち':'—')+'</small></span>'
+            + '<button class="cam" data-id="'+x.id+'">📷</button></div>'
+            + (ms.length ? '<div class="film">' + ms.map(m =>
+                '<button class="th sm" data-d="'+D+'" data-k="'+m.k+'">'
+                + (m.kind==='video' ? '<video src="'+urlOf(m)+'" muted></video><i>▶</i>'
+                                    : '<img src="'+urlOf(m)+'" alt="" loading="lazy">')
+                + '</button>').join('') + '</div>' : '')
+            + '</li>';
+        }).join('')
       + '</ol>'
-      + '<button class="danger" id="cr">今日の記録をリセット</button>';
+      + (D===today() ? '<button class="danger" id="cr">今日の記録をリセット</button>' : '');
   }
 
   /* ── 通算（公式に無いところ。ここが積み上がるほど戻ってくる理由になる） ── */
@@ -658,31 +1117,80 @@ function logPane(){
   }
 
   el.innerHTML = html;
+  el.querySelectorAll('.cam').forEach(b => b.onclick = () => addMedia(b.dataset.id));
+  el.querySelectorAll('.th').forEach(b => b.onclick = () => {
+    const ms = S.media.filter(m=>m.day===b.dataset.d);
+    openViewer(ms, ms.findIndex(m=>m.k===b.dataset.k));
+  });
   const cr = document.getElementById('cr');
   if(cr) cr.onclick = () => {
     if(confirm('今日の記録を全部消します。通算記録は残ります。')){ S.log.length = 0; save(); render(); }
   };
 }
 
-/* ── 先輩のテーマ ── */
-/* 楽曲そのものは配信できないので、各サービスの検索を開いて本人の環境で鳴らす */
+/* ── くまのプーさん ──
+   Spotify公式の埋め込みプレーヤー。イントロが長いので歌い出しの0:24へ飛ばす */
+const TRACK = '3V1Qfqtb3CP3yhaeYkXV8O', CUE = 24;
+let SPC = null;
+window.onSpotifyIframeApiReady = API => {
+  API.createController(
+    document.getElementById('sp-embed'),
+    {uri:'spotify:track:'+TRACK, width:'100%', height:'152'},
+    c => { SPC = c; }
+  );
+};
 (function music(){
-  const q = 'くまのプーさん 森の奥深く';
-  document.getElementById('m-sp').href = 'https://open.spotify.com/search/' + encodeURIComponent(q);
-  document.getElementById('m-am').href = 'https://music.apple.com/jp/search?term=' + encodeURIComponent(q);
-  document.getElementById('m-ym').href = 'https://music.youtube.com/search?q=' + encodeURIComponent(q);
+  document.getElementById('m-sp').href = 'https://open.spotify.com/track/' + TRACK;
+  document.getElementById('m-am').href =
+    'https://music.apple.com/jp/search?term=' + encodeURIComponent('くまのプーさん 日本語版');
   const sh = document.getElementById('sh');
-  document.getElementById('hn').onclick = () => sh.hidden = false;
-  document.getElementById('shx').onclick = () => sh.hidden = true;
-  sh.onclick = e => { if(e.target === sh) sh.hidden = true; };
+  const close = () => { sh.hidden = true; if(SPC) try{ SPC.pause(); }catch(e){} };
+  document.getElementById('hn').onclick = () => {
+    sh.hidden = false;
+    if(!SPC) return;
+    /* seek はプレーヤーが再生状態に入ってからでないと効かない */
+    try{ SPC.play(); setTimeout(()=>{ try{ SPC.seek(CUE); }catch(e){} }, 700); }catch(e){}
+  };
+  document.getElementById('shx').onclick = close;
+  sh.onclick = e => { if(e.target === sh) close(); };
 })();
+
+/* ── 天気（Open-Meteo・キー不要・CORS可） ── */
+const WXI = {0:'☀️',1:'🌤',2:'⛅️',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌦',
+  61:'🌧',63:'🌧',65:'🌧',66:'🌧',67:'🌧',71:'🌨',73:'🌨',75:'🌨',77:'🌨',
+  80:'🌦',81:'🌧',82:'🌧',85:'🌨',86:'🌨',95:'⛈',96:'⛈',99:'⛈'};
+async function weather(){
+  try{
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.6655&longitude=135.4323'
+      + '&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability'
+      + '&forecast_days=1&timezone=Asia%2FTokyo').then(r=>r.json());
+    document.getElementById('wxi').textContent = WXI[r.current.weather_code] || '·';
+    document.getElementById('wxt').textContent = Math.round(r.current.temperature_2m) + '°';
+    const h = r.hourly, now = new Date().getHours();
+    const rows = h.time.map((t,i)=>({h:+t.slice(11,13), i}))
+      .filter(x => x.h >= now && x.h <= 21).slice(0,9);
+    document.getElementById('wxb').innerHTML = rows.map(({h:hh,i}) =>
+      '<div class="wxh"><span>'+hh+'時</span><b>'+(WXI[h.weather_code[i]]||'·')+'</b>'
+      + '<em class="num">'+Math.round(h.temperature_2m[i])+'°</em>'
+      + '<i class="num">'+h.precipitation_probability[i]+'%</i></div>').join('');
+  }catch(e){
+    document.getElementById('wxb').innerHTML = '<p class="note-s">天気を取得できませんでした</p>';
+  }
+}
+(function wxUI(){
+  const s = document.getElementById('wxs');
+  document.getElementById('wx').onclick = () => s.hidden = false;
+  document.getElementById('wxx').onclick = () => s.hidden = true;
+  s.onclick = e => { if(e.target === s) s.hidden = true; };
+})();
+weather();
 
 /* ── UI配線 ── */
 document.getElementById('rf').onclick = load;
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(o => o.setAttribute('aria-selected', o===t));
-  document.getElementById('p-list').classList.toggle('hide', t.dataset.t!=='list');
-  document.getElementById('p-log').classList.toggle('hide', t.dataset.t!=='log');
+  ['list','plan','log','alb'].forEach(k =>
+    document.getElementById('p-'+k).classList.toggle('hide', t.dataset.t!==k));
 });
 document.querySelectorAll('[data-s]').forEach(c => c.onclick = () => {
   S.sort = c.dataset.s;
@@ -696,6 +1204,7 @@ document.getElementById('cl').onclick = function(){
   rows();
 };
 
+mediaAll().then(m => { S.media = m; render(); }).catch(()=>{});
 load();
 setInterval(load, 60000);   // 1分ごとに自動更新
 </script>
