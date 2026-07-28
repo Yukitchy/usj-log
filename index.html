@@ -784,12 +784,12 @@ function map(){
   const ZC = [[0,0],[0,-26],[0,26],[-34,0],[34,0],[0,-50],[0,50],[-58,-26],[58,-26],[-58,26],[58,26],[0,-74],[0,74]];
   let zs = '';
   ZONES.forEach(z=>{
-    const pos = fit(px(z.la,z.lo), py(z.la,z.lo), z.n.length*6.4, 15, ZC);
+    const pos = fit(px(z.la,z.lo), py(z.la,z.lo), z.n.length*11.9, 16, ZC);
     if(pos) zs += '<text class="zone-l" x="'+pos[0].toFixed(1)+'" y="'+pos[1].toFixed(1)+'" text-anchor="middle">'+z.n+'</text>';
   });
   s += zs;
   const slot = p => {
-    const w = Math.min(label(p.name).length,10)*8.4;
+    const w = Math.min(label(p.name).length,12)*9.4;
     for(const dy of [29,-21,41,-33,53,-45,65,-57]){
       const b = {x1:p.x-w/2, x2:p.x+w/2, y1:p.y+dy-7, y2:p.y+dy+4};
       if(!boxes.some(o => b.x1<o.x2 && b.x2>o.x1 && b.y1<o.y2 && b.y2>o.y1)){
