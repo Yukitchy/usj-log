@@ -426,7 +426,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 </style>
 </head>
 <body>
-<script>const PARKMAP = {};   /* map-<パークid>.js が入れる */</script>
+<script>const PARKMAP = {};   /* map-<パークid>.js が入れる */
+/* 地図データを差し替えたらこの数字を上げる（上げないとブラウザが古い版を使い続ける） */
+const MAPVER = 3;</script>
 
 <header>
   <div class="wrap hbar">
@@ -1575,7 +1577,7 @@ function loadMapFile(pk){
   if(PARKMAP[pk]) return Promise.resolve();
   return new Promise((ok,ng)=>{
     const t = document.createElement('script');
-    t.src = 'map-' + pk + '.js'; t.onload = ok; t.onerror = ng;
+    t.src = 'map-' + pk + '.js?v=' + MAPVER; t.onload = ok; t.onerror = ng;
     document.head.appendChild(t);
   });
 }
