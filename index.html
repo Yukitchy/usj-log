@@ -114,6 +114,7 @@ svg.map:active{cursor:grabbing}
   background:rgba(255,252,246,.9);border:1px solid rgba(43,33,24,.14);border-radius:9px;
   padding:3px 8px;font-size:11px;font-weight:900;color:#5A4C36;pointer-events:none}
 .compass span{font-size:10px;letter-spacing:.06em}
+.compass i{font-style:normal;display:inline-block;transition:transform .2s var(--ease-out)}
 .zone-l{font-size:11px;font-weight:900;fill:#8A7A5E;letter-spacing:.08em;paint-order:stroke;
   stroke:rgba(250,244,232,.75);stroke-width:4px}
 .lagoon-l{font-size:10px;font-weight:800;fill:#2F6E8C;letter-spacing:.06em;paint-order:stroke;
@@ -459,7 +460,7 @@ const MAPVER = 3;</script>
   <div class="mapcard">
     <div class="mapbox">
       <svg class="map" id="map" viewBox="0 0 560 560" role="img" aria-label="USJ 待ち時間マップ"><g id="vp"></g></svg>
-      <div class="compass" aria-hidden="true"><span>N</span>→</div>
+      <div class="compass" aria-hidden="true"><span>N</span><i id="cmp">→</i></div>
       <div class="zc">
         <button id="zi" aria-label="拡大">＋</button>
         <button id="zo" aria-label="縮小">−</button>
@@ -841,7 +842,14 @@ function parkPane(){
     + '<b>'+PARKS[k].s+'</b><span>'+PARKS[k].n+'</span></button>').join('');
   document.querySelectorAll('.pk2').forEach(b => b.onclick = () => switchPark(b.dataset.p));
 }
-function render(){ parkPane(); crowd(); dayStrip(); cfgPane(); map(); rows(); planPane(); logPane(); albumPane(); }
+
+/* 方位マークはパークごとに北の向きが変わる */
+function compass(){
+  const m = MP(); if(m.sn === undefined) return;
+  const deg = Math.round(Math.atan2(-m.cs, m.sn) * 180 / Math.PI);
+  document.getElementById('cmp').style.transform = 'rotate(' + deg + 'deg)';
+}
+function render(){ compass(); parkPane(); crowd(); dayStrip(); cfgPane(); map(); rows(); planPane(); logPane(); albumPane(); }
 
 const SW = [
   {k:'fullNames', n:'地図に正式名称を出す', d:'既定は通称（ハリドリ等）。拡大すれば正式名称に切り替わります'},
