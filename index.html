@@ -200,7 +200,8 @@ svg.map:active{cursor:grabbing}
 .desc{font-size:13px;line-height:1.85}
 .desc.dim{color:var(--sub);font-size:12px}
 .note-s{font-size:10.5px;color:var(--sub);line-height:1.75;margin:10px 0;font-weight:700}
-#sp-embed{border-radius:12px;overflow:hidden;min-height:80px}
+#sp-embed:not(:empty){border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#000}
+#sp-embed iframe{display:block;width:100%;height:100%;border:0}
 
 /* 天気 */
 .wx{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--bg2);
@@ -425,11 +426,9 @@ footer{color:var(--sub);font-size:10.5px;text-align:center;padding:26px 20px 34p
 <div class="sheet" id="sh" hidden>
   <div class="sheet-in">
     <h3>くまのプーさん</h3>
-    <p>▶ を押すと再生（歌い出しは 0:24）</p>
+    <p>歌い出し（0:24）から再生します</p>
     <div id="sp-embed"></div>
-    <p class="note-s">Spotify側の仕様で頭出しはできません。ログインしていないと30秒だけの再生になります。</p>
-    <a id="m-sp" href="#" target="_blank" rel="noopener"><i>🟢</i>Spotify アプリで開く</a>
-    <a id="m-am" href="#" target="_blank" rel="noopener"><i>🍎</i>Apple Music で探す</a>
+    <p class="note-s">音が出ない時は、プレーヤーの ▶ をもう一度どうぞ（端末側の自動再生制限）。</p>
     <button class="danger" id="shx" style="width:100%;margin-top:10px">閉じる</button>
   </div>
 </div>
@@ -1128,20 +1127,17 @@ function logPane(){
 
 /* ── くまのプーさん ──
    Spotify公式の埋め込みプレーヤー。イントロが長いので歌い出しの0:24へ飛ばす */
-/* 頭出し（0:24）ができる Spotify の IFrame API は現在404で提供停止。
-   素の埋め込みプレーヤーを開いた時だけ差し込む（閉じれば止まる） */
-const TRACK = '3V1Qfqtb3CP3yhaeYkXV8O';
+/* YouTubeは start= で頭出しできる（Spotifyの埋め込みは不可だった）。
+   iframe はボタンを押した瞬間に差し込む＝ユーザー操作扱いになり自動再生が通りやすい */
+const VID = 'hcta0Wj5is8', CUE = 24;
 (function music(){
-  document.getElementById('m-sp').href = 'https://open.spotify.com/track/' + TRACK;
-  document.getElementById('m-am').href =
-    'https://music.apple.com/jp/search?term=' + encodeURIComponent('くまのプーさん 日本語版');
   const sh = document.getElementById('sh'), box = document.getElementById('sp-embed');
-  const close = () => { sh.hidden = true; box.innerHTML = ''; };
+  const close = () => { sh.hidden = true; box.innerHTML = ''; };   /* 閉じたら止める */
   document.getElementById('hn').onclick = () => {
     sh.hidden = false;
-    box.innerHTML = '<iframe src="https://open.spotify.com/embed/track/' + TRACK
-      + '?utm_source=generator" width="100%" height="152" frameborder="0" loading="lazy"'
-      + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" title="くまのプーさん"></iframe>';
+    box.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + VID
+      + '?start=' + CUE + '&autoplay=1&rel=0&playsinline=1" frameborder="0" title="くまのプーさん"'
+      + ' allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
   };
   document.getElementById('shx').onclick = close;
   sh.onclick = e => { if(e.target === sh) close(); };
