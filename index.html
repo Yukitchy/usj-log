@@ -1231,32 +1231,31 @@ function logPane(){
 const VID = 'hcta0Wj5is8', CUE = 24;
 /* 映像は出さない。iframe を消すと音も止まるので画面外に置いたまま、
    YouTube IFrame API で自前のバーから操作する */
-let YTP = null, ytWant = false;
+let YTP = null;
+/* APIは最初から読み込んでおく。押した瞬間に playVideo() まで到達しないと
+   「ユーザー操作による再生」と見なされず自動再生がブロックされる */
 window.onYouTubeIframeAPIReady = () => {
   YTP = new YT.Player('sp-embed', {
-    videoId: VID, host: 'https://www.youtube-nocookie.com',
-    playerVars: {start:CUE, autoplay:1, playsinline:1, rel:0, controls:0},
+    videoId: VID,
+    playerVars: {start:CUE, autoplay:0, playsinline:1, rel:0, controls:0},
     events: {
-      onReady: e => { if(ytWant){ e.target.seekTo(CUE); e.target.playVideo(); } },
       onStateChange: e => {
-        const on = e.data === YT.PlayerState.PLAYING;
-        document.getElementById('mnp').textContent = on ? '⏸' : '▶';
+        document.getElementById('mnp').textContent =
+          e.data === YT.PlayerState.PLAYING ? '⏸' : '▶';
       }
     }
   });
 };
+(function ytBoot(){
+  const t = document.createElement('script');
+  t.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(t);
+})();
 (function music(){
   const mini = document.getElementById('mini'), hn = document.getElementById('hn');
   hn.onclick = () => {
     mini.hidden = false; hn.hidden = true;    /* 🍯 がバーに変わる */
-    ytWant = true;
-    if(!YTP){
-      if(!window.YT){
-        const t = document.createElement('script');
-        t.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(t);
-      }
-    }else{ YTP.seekTo(CUE); YTP.playVideo(); }
+    if(YTP && YTP.playVideo){ YTP.seekTo(CUE); YTP.playVideo(); }
   };
   document.getElementById('mnp').onclick = () => {
     if(!YTP) return;
