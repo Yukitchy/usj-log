@@ -593,6 +593,9 @@ const PARKS = {
        gate:{la:35.62703, lo:139.88909}}
 };
 let PK = localStorage.getItem('parklog.pk') || 'usj';
+/* 共有リンクに園が載っていればそれを優先（相手と同じ画面にするため） */
+{ const hp = (location.hash.match(/[#&]pk=(usj|tdl|tds)/) || [])[1];
+  if(hp && PARKS[hp]){ PK = hp; localStorage.setItem('parklog.pk', hp); } }
 const P  = () => PARKS[PK];
 const MP = () => PARKMAP[PK] || {};
 const API = () => 'https://api.themeparks.wiki/v1/entity/' + P().api;
@@ -1549,7 +1552,7 @@ const planMove = (i, d) => {
 };
 /* UUIDは長いので先頭8文字だけ載せ、開いた側で前方一致で戻す */
 const planUrl = () => location.origin + location.pathname
-  + '#p=' + S.plan.map(id => id.slice(0,8)).join('.');
+  + '#pk=' + PK + '&p=' + S.plan.map(id => id.slice(0,8)).join('.');
 
 function planPane(){
   const el = document.getElementById('p-plan');
@@ -1606,9 +1609,9 @@ function planPane(){
   if(cl) cl.onclick = () => { S.plan = []; render(); };
   const sh = document.getElementById('p-share');
   if(sh) sh.onclick = async () => {
-    const url = planUrl(), text = 'USJの回り方（' + items.map(x=>x.name).join(' → ') + '）';
+    const url = planUrl(), text = P().s + 'の回り方（' + items.map(x=>x.name).join(' → ') + '）';
     try{
-      if(navigator.share) await navigator.share({title:'パークログ USJ', text, url});
+      if(navigator.share) await navigator.share({title:'パークログ ' + P().s, text, url});
       else { await navigator.clipboard.writeText(url); sh.textContent = '✓ リンクをコピーしました'; }
     }catch(e){}
   };
