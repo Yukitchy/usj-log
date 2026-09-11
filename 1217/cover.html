@@ -96,13 +96,13 @@ footer{padding:26px 0 44px;font-size:10.5px;color:var(--ash);line-height:1.7;fon
     </div>
   </div>
   <div>
-    <p class="lead">両方行く。でも12/17をどっちからにするかは、ゆりやが決める号。材料は全部公式サイトの本当の話です。</p>
+    <p class="lead">行くのは12/17の1日、どっちか1つ。シーかランドか、ゆりやが決める号。材料は全部公式サイトの本当の話です。</p>
     <div class="toc">
       <div><span><b>01</b>シー特集 ラプンツェルはシーだけ</span><span>p.2</span></div>
       <div><span><b>02</b>ランド特集 クリスマスのパレード2本</span><span>p.3</span></div>
       <div><span><b>03</b>動画で予習 公式チャンネル</span><span>p.4</span></div>
       <div><span><b>04</b>データで見る 12/17</span><span>p.5</span></div>
-      <div><span><b>05</b>読者投票 どっちから？</span><span>p.6</span></div>
+      <div><span><b>05</b>読者投票 どっちにする？</span><span>p.6</span></div>
     </div>
   </div>
 </section>
@@ -176,11 +176,11 @@ footer{padding:26px 0 44px;font-size:10.5px;color:var(--ash);line-height:1.7;fon
 <section class="pg" style="border-top:0;padding-top:20px">
   <div class="poll">
     <div class="kicker">READERS' POLL ／ 読者投票<span style="color:#ffd9d3">p.6</span></div>
-    <h2>で、どっちから？</h2>
-    <p>押すと決定。そのあと出るボタンでユウキにLINEしてください。残った方は2日目に。</p>
+    <h2>で、どっちにする？</h2>
+    <p>押すと決定。そのあと出るボタンでユウキにLINEしてください。</p>
     <div class="btns">
-      <button class="btn" data-p="シー">シーから！<small>ラプンツェルの日</small></button>
-      <button class="btn" data-p="ランド">ランドから！<small>クリスマスパレードの日</small></button>
+      <button class="btn" data-p="シー">シーにする！<small>ラプンツェルの日</small></button>
+      <button class="btn" data-p="ランド">ランドにする！<small>クリスマスパレードの日</small></button>
     </div>
     <div class="done" id="done"></div>
   </div>
@@ -193,8 +193,8 @@ footer{padding:26px 0 44px;font-size:10.5px;color:var(--ash);line-height:1.7;fon
   var K='disney1217.pick', done=document.getElementById('done'), btns=document.querySelectorAll('.btn');
   function show(p){
     btns.forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});
-    var msg='12/17は'+p+'から！';
-    done.innerHTML='<b>'+p+'から、で決まり。</b> 2日目は'+(p==='シー'?'ランド':'シー')+'。<br><a href="https://line.me/R/share?text='+encodeURIComponent(msg)+'">この一言をLINEで送る →</a>';
+    var msg='12/17は'+p+'にする！';
+    done.innerHTML='<b>12/17は'+p+'、で決まり。</b><br><a href="https://line.me/R/share?text='+encodeURIComponent(msg)+'">この一言をLINEで送る →</a>';
     done.classList.add('show');
   }
   btns.forEach(function(b){b.onclick=function(){try{localStorage.setItem(K,b.dataset.p)}catch(e){} show(b.dataset.p)}});
