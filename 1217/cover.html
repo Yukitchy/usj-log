@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>12/17、シー？ランド？ ゆりやが決める号</title>
+<meta name="robots" content="noindex">
+<meta property="og:title" content="12/17、シー？ランド？ — ゆりやが決める号">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Caveat:wght@700&display=swap">
+<style>
+:root{--bg:#fff;--card:#faf8f8;--ink:#202020;--mute:#645f5e;--ash:#8a8482;--line:#e6e2e1;--tomato:#e5382b;--shadow:#a8271d;--wash:#fde3df;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;font-weight:700;line-height:1.7;-webkit-font-smoothing:antialiased;font-feature-settings:"palt";word-break:auto-phrase;overflow-wrap:anywhere}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{line-height:1.12;text-wrap:balance;word-break:keep-all;overflow-wrap:anywhere}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px}
+/* cover */
+.cover{position:relative;min-height:100svh;padding:22px 0 40px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.mast{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--mute);letter-spacing:.08em}
+.mast b{color:var(--ink);font-weight:900;letter-spacing:.02em}
+.badge{position:absolute;right:-6px;top:54px;width:96px;height:96px;border-radius:50%;background:var(--tomato);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12.5px;font-weight:900;line-height:1.3;transform:rotate(8deg);box-shadow:0 4px 0 0 var(--shadow)}
+.cover h1{color:var(--tomato);font-size:clamp(56px,17vw,96px);font-weight:900;letter-spacing:-.045em;line-height:.98;margin-top:26px;padding-right:80px}
+.cover h1 small{display:block;color:var(--ink);font-size:clamp(20px,6vw,30px);letter-spacing:-.02em;margin-bottom:6px}
+.polas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px;padding:0 6px}
+.pola{background:#fff;padding:8px 8px 10px;box-shadow:0 6px 18px rgba(0,0,0,.14);border:1px solid var(--line)}
+.pola:first-child{transform:rotate(-4deg)}.pola:last-child{transform:rotate(3deg) translateY(10px)}
+.pola img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#ddd}
+.pola span{display:block;font-family:"Caveat",cursive;font-size:30px;font-weight:700;line-height:1.1;color:var(--tomato);margin-top:6px;text-align:center}
+.cover .lead{font-size:13.5px;color:var(--mute);margin-top:28px;max-width:30em}
+.cover .toc{margin-top:18px;border-top:2px solid var(--ink);padding-top:10px;font-size:12.5px;display:grid;gap:4px}
+.cover .toc div{display:flex;justify-content:space-between}
+.cover .toc b{color:var(--tomato);font-weight:900;margin-right:8px}
+/* pages */
+.pg{padding:44px 0 40px;border-top:1px solid var(--line)}
+.kicker{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;letter-spacing:.12em;color:var(--tomato);font-weight:900;margin-bottom:12px}
+.kicker span{color:var(--ash);letter-spacing:.02em}
+.pg h2{font-size:clamp(30px,9vw,44px);font-weight:900;letter-spacing:-.03em}
+.pg h2 em{font-style:normal;color:var(--tomato)}
+.dek{font-size:14.5px;color:var(--mute);margin:12px 0 18px;max-width:32em}
+.fig{margin:0 0 16px}
+.fig img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#ddd}
+.fig figcaption{font-size:11px;color:var(--ash);margin-top:6px;letter-spacing:.02em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+.two img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#ddd}
+.pts{list-style:none;padding:0;margin:0 0 16px;border-top:2px solid var(--ink)}
+.pts li{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:16px;line-height:1.5;align-items:start}
+.pts li i{font-style:normal;color:var(--tomato);font-weight:900;font-size:20px;line-height:1.1;letter-spacing:-.02em}
+.pts li small{display:block;font-size:12.5px;color:var(--mute);font-weight:500;line-height:1.6}
+.quote{border-left:4px solid var(--tomato);padding:4px 0 4px 14px;font-size:18px;font-weight:900;letter-spacing:-.01em;margin:6px 0 18px}
+.quote small{display:block;font-size:11.5px;color:var(--ash);font-weight:700;margin-top:4px}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.nums div{border:1px solid var(--line);border-radius:4px;padding:12px 8px;text-align:center;background:var(--card)}
+.nums dt{font-size:10.5px;color:var(--ash);letter-spacing:.06em}
+.nums dd{margin:0;font-size:22px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.nums dd small{display:block;font-size:10.5px;color:var(--mute)}
+.rest{list-style:none;padding:0;margin:0 0 6px}
+.rest li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dotted #cfc9c6;font-size:14px}
+.rest li b{font-weight:900}.rest li span{color:var(--mute);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rest li small{display:block;font-size:11.5px;color:var(--ash);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:8px}
+th,td{padding:11px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{border-bottom:2px solid var(--ink);font-weight:900}
+tbody th{font-size:11.5px;color:var(--ash);font-weight:700;letter-spacing:.04em;width:26%}
+td b{font-weight:900}td small{display:block;color:var(--mute);font-size:11.5px;font-weight:500}
+/* poll */
+.poll{background:var(--tomato);color:#fff;padding:36px 22px;margin:10px -20px 0}
+.poll .kicker{color:#ffd9d3}
+.poll h2{color:#fff}
+.poll p{color:#ffe3df;font-size:14px;margin:10px 0 20px}
+.btns{display:grid;gap:12px}
+.btn{display:block;width:100%;background:#fff;color:var(--ink);font-weight:900;font-size:21px;padding:18px;border-radius:6px;border:0;box-shadow:0 5px 0 0 var(--shadow);cursor:pointer;font-family:inherit;text-align:left;position:relative}
+.btn:after{content:"›";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:28px;color:var(--tomato)}
+.btn small{display:block;font-size:12px;color:var(--mute);font-weight:700}
+.btn.on{outline:4px solid var(--ink);outline-offset:2px}
+.done{display:none;margin-top:16px;background:#fff;color:var(--ink);border-radius:6px;padding:14px 16px;font-size:14.5px}
+.done.show{display:block}
+.done a{display:inline-block;margin-top:8px;font-weight:900;color:#fff;background:var(--ink);border-radius:6px;padding:10px 18px;text-decoration:none}
+footer{padding:26px 0 44px;font-size:10.5px;color:var(--ash);line-height:1.7;font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section class="cover">
+  <div>
+    <div class="mast"><b>PARKLOG MAGAZINE</b><span>2026.12.17 / vol.1</span></div>
+    <div class="badge">ゆりやが<br>決める号</div>
+    <h1><small>12/17、</small>シー？<br>ランド？</h1>
+    <div class="polas">
+      <div class="pola"><img src="img/sea-gondola.jpg" alt="東京ディズニーシー"><span>Sea?</span></div>
+      <div class="pola"><img src="img/land-beauty.jpg" alt="東京ディズニーランド"><span>Land?</span></div>
+    </div>
+  </div>
+  <div>
+    <p class="lead">両方行く。でも12/17をどっちからにするかは、ゆりやが決める号。材料は全部公式サイトの本当の話です。</p>
+    <div class="toc">
+      <div><span><b>01</b>シー特集 ラプンツェルはシーだけ</span><span>p.2</span></div>
+      <div><span><b>02</b>ランド特集 クリスマスのパレード2本</span><span>p.3</span></div>
+      <div><span><b>03</b>データで見る 12/17</span><span>p.4</span></div>
+      <div><span><b>04</b>読者投票 どっちから？</span><span>p.5</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="pg">
+  <div class="kicker">FEATURE 01 ／ 東京ディズニーシー<span>p.2</span></div>
+  <h2>ラプンツェルは<br><em>シーだけ</em></h2>
+  <p class="dek">25周年“スパークリング・ジュビリー”の真っ最中に、クリスマスが重なる日。</p>
+  <figure class="fig"><img src="img/sea-hero.jpg" alt="東京ディズニーシー25周年 スパークリング・ジュビリー"><figcaption>東京ディズニーシー25周年“スパークリング・ジュビリー”（2027/3/31まで）</figcaption></figure>
+  <ul class="pts">
+    <li><i>01</i><span>ラプンツェルのランタンフェスティバル<small>シーにしかない。並んで乗れる。急ぐならプレミアアクセス¥2,000/回</small></span></li>
+    <li><i>02</i><span>ハーバーのクリスマス・グリーティング<small>15分×2回。アメフロにはジュビリーブルーのツリー</small></span></li>
+    <li><i>03</i><span>夜は花火「スターブライト・クリスマス」<small>ゴンドラの夜景とセットで</small></span></li>
+  </ul>
+  <div class="two"><img src="img/sea-toymania.jpg" alt="トイ・ストーリー・マニア！"><img src="img/sea-magellans.jpg" alt="マゼランズ"></div>
+  <p class="quote">予約できるディナーが6軒。おしゃれ度はシーが上。<small>マゼランズ コース¥8,000〜／S.S.コロンビア コース¥7,000〜／カナレット セット¥4,200〜</small></p>
+</section>
+
+<section class="pg">
+  <div class="kicker">FEATURE 02 ／ 東京ディズニーランド<span>p.3</span></div>
+  <h2>クリスマスの<br>パレードが<em>2本</em></h2>
+  <p class="dek">ディズニー・クリスマス（11/11〜12/25）のど真ん中。昼と夜、どっちも見られる。</p>
+  <figure class="fig"><img src="img/land-hero.jpg" alt="ディズニー・クリスマス 東京ディズニーランド"><figcaption>ディズニー・クリスマス 2026（11/11〜12/25）</figcaption></figure>
+  <ul class="pts">
+    <li><i>01</i><span>トイズ・ワンダラス・クリスマス！<small>昼のパレード、45分×1回</small></span></li>
+    <li><i>02</i><span>クリスマス版エレクトリカルパレード<small>夜、45分×1回。そのあと花火</small></span></li>
+    <li><i>03</i><span>ワールドバザールの大ツリー＋ジョリーフード・プラザ<small>シンデレラ城前に初登場の食べ歩き広場</small></span></li>
+  </ul>
+  <div class="two"><img src="img/land-pooh.jpg" alt="プーさんのハニーハント"><img src="img/land-bluebayou.jpg" alt="ブルーバイユー・レストラン"></div>
+  <p class="quote">のんびり回れそう。美女と野獣は¥2,500で確実に。<small>ディナーはブルーバイユー コース¥7,000〜7,500／クリスタルパレス ブッフェ¥5,500</small></p>
+</section>
+
+<section class="pg">
+  <div class="kicker">DATA ／ 12/17（木）<span>p.4</span></div>
+  <h2>データで見る<br><em>12/17</em></h2>
+  <p class="dek">混雑予想はパークログが毎日測っている平均待ち時間から。価格は公式メニューの実額。</p>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th></th><th>シー</th><th>ランド</th></tr></thead>
+    <tbody>
+      <tr><th>混雑予想</th><td><b>50分</b><small>平均待ち・木曜</small></td><td><b>24分</b><small>平均待ち・木曜</small></td></tr>
+      <tr><th>目玉</th><td><b>ラプンツェル</b><small>並んでOK／¥2,000</small></td><td><b>美女と野獣</b><small>¥2,500で確実</small></td></tr>
+      <tr><th>この日</th><td>25周年＋クリスマス<small>グリーティング15分×2</small></td><td>ディズニー・クリスマス<small>パレード45分×2本</small></td></tr>
+      <tr><th>ディナー</th><td><b>6軒</b><small>¥4,200〜¥12,000</small></td><td><b>5軒</b><small>¥2,800〜¥7,500</small></td></tr>
+      <tr><th>夜</th><td>花火＋ゴンドラ</td><td>エレパレ＋花火</td></tr>
+      <tr><th>営業・料金</th><td>9:00–21:00・¥10,900</td><td>9:00–21:00・¥10,900</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <dl class="nums">
+    <div><dt>チケット販売</dt><dd>10/17<small>14:00〜</small></dd></div>
+    <div><dt>ディナー予約</dt><dd>11/17<small>10:00〜</small></dd></div>
+    <div><dt>当日</dt><dd>12/17<small>9:00 開園</small></dd></div>
+  </dl>
+</section>
+
+<section class="pg" style="border-top:0;padding-top:20px">
+  <div class="poll">
+    <div class="kicker">READERS' POLL ／ 読者投票<span style="color:#ffd9d3">p.5</span></div>
+    <h2>で、どっちから？</h2>
+    <p>押すと決定。そのあと出るボタンでユウキにLINEしてください。残った方は2日目に。</p>
+    <div class="btns">
+      <button class="btn" data-p="シー">シーから！<small>ラプンツェルの日</small></button>
+      <button class="btn" data-p="ランド">ランドから！<small>クリスマスパレードの日</small></button>
+    </div>
+    <div class="done" id="done"></div>
+  </div>
+</section>
+
+<footer>写真・イベント情報は東京ディズニーリゾート公式サイト（tokyodisneyresort.jp）より。権利は各権利者に帰属します。混雑予想はパークログ（yukitchy.github.io/usj-log）の実測からの見込みで、当日の保証ではありません。2026-09-11時点。</footer>
+</div>
+<script>
+(function(){
+  var K='disney1217.pick', done=document.getElementById('done'), btns=document.querySelectorAll('.btn');
+  function show(p){
+    btns.forEach(function(b){b.classList.toggle('on',b.dataset.p===p)});
+    var msg='12/17は'+p+'から！';
+    done.innerHTML='<b>'+p+'から、で決まり。</b> 2日目は'+(p==='シー'?'ランド':'シー')+'。<br><a href="https://line.me/R/share?text='+encodeURIComponent(msg)+'">この一言をLINEで送る →</a>';
+    done.classList.add('show');
+  }
+  btns.forEach(function(b){b.onclick=function(){try{localStorage.setItem(K,b.dataset.p)}catch(e){} show(b.dataset.p)}});
+  try{var s=localStorage.getItem(K); if(s) show(s);}catch(e){}
+})();
+</script>
+</body>
+</html>
