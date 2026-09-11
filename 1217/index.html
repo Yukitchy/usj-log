@@ -6,7 +6,7 @@
 <title>12/17、シー？ランド？</title>
 <meta name="robots" content="noindex">
 <meta property="og:title" content="12/17、シー？ランド？">
-<meta property="og:description" content="上にスライドでシー、下にスライドでランド。ゆりやが決める12/17。">
+<meta property="og:description" content="上にスライドでシー、下にスライドでランド。12/17はどっち？ゆりやが決める。">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
 <style>
 :root{--bg:#fff;--card:#faf8f8;--ink:#202020;--mute:#645f5e;--ash:#8a8482;--line:#e6e2e1;--tomato:#e5382b;--shadow:#a8271d;--wash:#fde3df;color-scheme:light}
@@ -83,9 +83,9 @@ h1,h2,h3{line-height:1.15;text-wrap:balance;word-break:keep-all;overflow-wrap:an
 <!-- ===== シー側（真ん中から上へ読む） ===== -->
 <section class="s end sea" id="sea-end">
   <div class="eyebrow">シーはここまで</div>
-  <h2>シーから、<br>にする？</h2>
-  <p class="lead">押すと決定。残ったランドは2日目に。</p>
-  <button class="btn" data-p="シー">シーから！<small>ラプンツェルの日</small></button>
+  <h2>シーに、<br>する？</h2>
+  <p class="lead">押すと決定。12/17はシーの1日。</p>
+  <button class="btn" data-p="シー">シーにする！<small>ラプンツェルの日</small></button>
   <div class="done" id="done-sea"></div>
   <p class="credit">写真・イベント情報は東京ディズニーリゾート公式サイト（tokyodisneyresort.jp）より。権利は各権利者に帰属します。混雑予想はパークログの実測からの見込みで当日の保証ではありません。2026-09-11時点。</p>
 </section>
@@ -157,7 +157,7 @@ h1,h2,h3{line-height:1.15;text-wrap:balance;word-break:keep-all;overflow-wrap:an
     <div><b>↑</b>上にスライドでシー<small>ラプンツェル・25周年</small></div>
     <div><b>↓</b>下にスライドでランド<small>クリスマスのパレード</small></div>
   </div>
-  <p class="who">両方行くつもり。12/17をどっちからにするか、ゆりやが決めてください。残った方は2日目に。</p>
+  <p class="who">行くのは12/17の1日、どっちか1つ。シーかランドか、ゆりやが決めてください。</p>
 </section>
 
 <!-- ===== ランド側（真ん中から下へ読む） ===== -->
@@ -219,9 +219,9 @@ h1,h2,h3{line-height:1.15;text-wrap:balance;word-break:keep-all;overflow-wrap:an
 
 <section class="s end land" id="land-end">
   <div class="eyebrow">ランドはここまで</div>
-  <h2>ランドから、<br>にする？</h2>
-  <p class="lead">押すと決定。残ったシーは2日目に。</p>
-  <button class="btn" data-p="ランド">ランドから！<small>クリスマスパレードの日</small></button>
+  <h2>ランドに、<br>する？</h2>
+  <p class="lead">押すと決定。12/17はランドの1日。</p>
+  <button class="btn" data-p="ランド">ランドにする！<small>クリスマスパレードの日</small></button>
   <div class="done" id="done-land"></div>
   <p class="credit">写真・イベント情報は東京ディズニーリゾート公式サイト（tokyodisneyresort.jp）より。権利は各権利者に帰属します。混雑予想はパークログの実測からの見込みで当日の保証ではありません。2026-09-11時点。</p>
 </section>
@@ -237,9 +237,9 @@ h1,h2,h3{line-height:1.15;text-wrap:balance;word-break:keep-all;overflow-wrap:an
   deck.addEventListener('scroll',rail,{passive:true}); rail();
   var K='disney1217.pick';
   function show(p){
-    var d=document.getElementById(p==='シー'?'done-sea':'done-land'), other=p==='シー'?'ランド':'シー';
-    var msg='12/17は'+p+'から！';
-    d.innerHTML='<b>'+p+'から、で決まり。</b> 2日目は'+other+'。<br><a href="https://line.me/R/share?text='+encodeURIComponent(msg)+'">この一言をLINEで送る →</a>';
+    var d=document.getElementById(p==='シー'?'done-sea':'done-land');
+    var msg='12/17は'+p+'にする！';
+    d.innerHTML='<b>12/17は'+p+'、で決まり。</b><br><a href="https://line.me/R/share?text='+encodeURIComponent(msg)+'">この一言をLINEで送る →</a>';
     d.classList.add('show');
   }
   document.querySelectorAll('.btn').forEach(function(b){ b.onclick=function(){ try{localStorage.setItem(K,b.dataset.p)}catch(e){} show(b.dataset.p); }; });
