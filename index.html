@@ -1770,9 +1770,11 @@ async function weather(){
       + '&forecast_days=7&timezone=Asia%2FTokyo').then(r=>r.json());
     document.getElementById('wxi').textContent = WXI[r.current.weather_code] || '·';
     document.getElementById('wxt').textContent = Math.round(r.current.temperature_2m) + '°';
-    const h = r.hourly, now = new Date().getHours();
-    const rows = h.time.map((t,i)=>({h:+t.slice(11,13), i}))
-      .filter(x => x.h >= now && x.h <= 21).slice(0,9);
+    const h = r.hourly, now = new Date().getHours(), td = today();
+    /* 時刻だけで絞ると日付をまたいで同じ時刻を拾ってしまう（例:残り3時間なら
+       明日・明後日の同じ時刻まで混ざる）ので、まず今日の行だけに絞る */
+    const rows = h.time.map((t,i)=>({d:t.slice(0,10), h:+t.slice(11,13), i}))
+      .filter(x => x.d === td && x.h >= now && x.h <= 21).slice(0,9);
     document.getElementById('wxb').innerHTML = rows.map(({h:hh,i}) =>
       '<div class="wxh"><span>'+hh+'時</span><b>'+(WXI[h.weather_code[i]]||'·')+'</b>'
       + '<em class="num">'+Math.round(h.temperature_2m[i])+'°</em>'
