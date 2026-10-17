@@ -144,5 +144,44 @@ def main():
             os.remove(LOCK)
 
 
+def _selftest():
+    """ネットに触らず sample()/schedule_of() の抽出ロジックだけ検査する。--selftest で実行。"""
+    import types
+    mod = sys.modules[__name__]
+    orig_get = get
+
+    # sample(): CLOSEDや待ち時間nullを無視し、OPERATING中のwaitTimeだけ平均する
+    fake_live = {'liveData': [
+        {'entityType': 'ATTRACTION', 'status': 'OPERATING', 'queue': {'STANDBY': {'waitTime': 10}}},
+        {'entityType': 'ATTRACTION', 'status': 'OPERATING', 'queue': {'STANDBY': {'waitTime': 30}}},
+        {'entityType': 'ATTRACTION', 'status': 'CLOSED', 'queue': {'STANDBY': {'waitTime': 999}}},
+        {'entityType': 'ATTRACTION', 'status': 'OPERATING', 'queue': {'STANDBY': {'waitTime': None}}},
+        {'entityType': 'SHOW', 'status': 'OPERATING', 'queue': {'STANDBY': {'waitTime': 5}}},
+    ]}
+    mod.get = lambda url, timeout=25: fake_live
+    try:
+        r = sample('dummy')
+    finally:
+        mod.get = orig_get
+    assert r == {'avg': 20, 'open': 2}, f"稼働中2施設の平均20分のはずが: {r}"
+
+    # schedule_of(): 開園〜閉園の分数計算
+    fake_sch = {'schedule': [
+        {'date': '2026-10-18', 'type': 'OPERATING',
+         'openingTime': '2026-10-18T09:00:00+09:00', 'closingTime': '2026-10-18T21:00:00+09:00'},
+    ]}
+    mod.get = lambda url, timeout=25: fake_sch
+    try:
+        r = schedule_of('dummy', '2026-10-18')
+    finally:
+        mod.get = orig_get
+    assert r == {'o': '09:00', 'c': '21:00', 'mins': 720}, f"営業時間の分数計算が想定外: {r}"
+
+    print('selftest OK')
+
+
 if __name__ == '__main__':
-    sys.exit(main())
+    if '--selftest' in sys.argv:
+        _selftest()
+    else:
+        sys.exit(main())
